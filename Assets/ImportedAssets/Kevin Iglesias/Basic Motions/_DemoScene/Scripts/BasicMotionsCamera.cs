@@ -161,13 +161,16 @@ namespace KevinIglesias
             RaycastHit? closestHit = null; //NULLABLE RaycastHit
             foreach (RaycastHit hit in raycastHits)
             {
-                //ONLY USE COLLIDERS THAT ARE CHILDREN OF collisionsRoot TRANSFORM
-                if (hit.transform.parent.gameObject.layer == bMCC.mapLayer)
+                if (hit.transform.parent != null)
                 {
-                    //CHECK CLOSEST WALL TO CHARACTER IF MULTIPLE WALLS DETECTED
-                    if (closestHit == null || hit.distance < closestHit.Value.distance)
+                    //ONLY USE COLLIDERS THAT ARE CHILDREN OF collisionsRoot TRANSFORM
+                    if (hit.transform.parent.gameObject.layer == bMCC.mapLayer)
                     {
-                        closestHit = hit;
+                        //CHECK CLOSEST WALL TO CHARACTER IF MULTIPLE WALLS DETECTED
+                        if (closestHit == null || hit.distance < closestHit.Value.distance)
+                        {
+                            closestHit = hit;
+                        }
                     }
                 }
             }

@@ -720,9 +720,15 @@ namespace KevinIglesias
             foreach (Collider collider in colliders)
             {
                 //ONLY USE COLLIDERS THAT ARE CHILDREN OF collisionsRoot TRANSFORM
-                if (!IsMap(collider) && collider.gameObject.tag != "Door")
+                if (!IsMap(collider) && collider.gameObject.tag != "Door" && collider.gameObject.tag != "Enemy")
                 {
                     continue;
+                }
+
+                // 적과 충돌했을 때
+                if (collider.gameObject.tag == "Enemy")
+                {
+                    Debug.Log("적에게 피해를 받고 있습니다!");
                 }
 
                 bool insideCollision = Physics.ComputePenetration(collisionBox, collisionBox.transform.position, collisionBox.transform.rotation, collider, collider.transform.position, collider.transform.rotation, out penetrationDirection, out penetrationDistance);
