@@ -22,12 +22,18 @@ namespace KevinIglesias
     {
         [SerializeField]
         private CharacterState newState; //NEW STATE TO CHANGE
-        
+        private BasicMotionsCharacterController characterController;
+
         //THIS WILL BE CALLED EVERY FRAME WHILE IN THE STATE, HIGHER LAYERS WILL HAVE HIGHER PRIORITY AND WILL OVERRIDE LOWER LAYERS CALLS
         override public void OnStateUpdate(Animator animator, AnimatorStateInfo stateInfo, int layerIndex)
         {
-            //CALL CHANGE STATE FUNCTION FROM MAIN SCRIPT
-            animator.transform.parent.GetComponent<BasicMotionsCharacterController>().ChangeState(newState); 
+            characterController = animator.transform.parent.GetComponent<BasicMotionsCharacterController>();
+            if (characterController != null)
+            {
+                //CALL CHANGE STATE FUNCTION FROM MAIN SCRIPT
+                characterController.ChangeState(newState);
+            }
+
         }
     }
 }

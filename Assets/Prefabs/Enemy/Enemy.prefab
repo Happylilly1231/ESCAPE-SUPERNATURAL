@@ -330,7 +330,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8821151048953095363}
-  - component: {fileID: 2098789739548607955}
   - component: {fileID: 6232954748266466977}
   - component: {fileID: 8773966416505862257}
   - component: {fileID: 6153452353789239731}
@@ -351,109 +350,13 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.15, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7086166024199937304}
   - {fileID: 819841772476358465}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2098789739548607955
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5842936304714243820}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fdfed45062c8ab640b8090d71612997b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  characterState: 0
-  animator: {fileID: 3798560477623928674}
-  walkLayer: 1
-  walkLayerWeight: 0
-  walkTransitionSpeed: 5
-  sprintLayer: 2
-  sprintLayerWeight: 0
-  sprintTransitionSpeed: 6
-  crouchLayer: 3
-  crouchLayerWeight: 0
-  crouchTransitionSpeed: 10
-  moveSpeed: 0
-  runSpeed: 4.4
-  walkSpeed: 2
-  crouchSpeed: 2
-  sprintSpeed: 7.5
-  turnSpeed: 150
-  jumpForce: 4
-  verticalVelocity: 0
-  slideDistance: 3
-  slideDuration: 0.5
-  slideCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 2
-      outSlope: 2
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  rollDistance: 4.5
-  rollDuration: 0.5
-  rollCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 1
-      outSlope: 1
-      tangentMode: 34
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0.33333334
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0.42391765
-      outSlope: 1
-      tangentMode: 1
-      weightedMode: 0
-      inWeight: 0.078947484
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  lastMovementInputs: {x: 0, y: 0}
-  collisionBox: {fileID: 6232954748266466977}
-  crouchBoxCenter: {x: 0, y: 0.65, z: 0}
-  crouchBoxSize: {x: 0.62, y: 0.8, z: 0.85}
-  character_nearby: 0
-  interactionRange: 2.5
-  interactiveLayerMask:
-    serializedVersion: 2
-    m_Bits: 0
-  mapLayer: 7
-  gravity: -9.81
-  controlsWindow: {fileID: 0}
-  interactionUI: {fileID: 0}
 --- !u!65 &6232954748266466977
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -509,7 +412,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c11f3138ae381384fab6c698983f4b1b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: {fileID: 0}
+  anim: {fileID: 3798560477623928674}
+  collisionBox: {fileID: 6232954748266466977}
+  trackingRange: 5
 --- !u!1 &7640125131089938231
 GameObject:
   m_ObjectHideFlags: 0
@@ -607,7 +512,7 @@ PrefabInstance:
     - target: {fileID: 6982812146204527121, guid: 64dce48905ffd9b4293e595fa6941544,
         type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6982812146204527121, guid: 64dce48905ffd9b4293e595fa6941544,
         type: 3}

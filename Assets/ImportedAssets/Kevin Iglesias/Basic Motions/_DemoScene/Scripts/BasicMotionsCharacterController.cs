@@ -180,7 +180,7 @@ namespace KevinIglesias
         public Vector3 crouchBoxSize; //CROUCH COLLIDER SIZE VALUES
         public bool character_nearby;
         public float interactionRange = 2.5f; // 상호작용 가능한 범위(OverlapSphere 반지름)
-        public LayerMask interactiveLayerMask; // 상호작용 가능한 오브젝트 레이어 마스크
+        private LayerMask interactiveLayerMask; // 상호작용 가능한 오브젝트 레이어 마스크
         private void ChangeColliderSize(CharacterState newState) //CHANGE COLLIDER CENTER AND SIZE WHEN CROUCH
         {
             switch (newState)
@@ -391,6 +391,12 @@ namespace KevinIglesias
                 inputs.walk = true;
             }
 
+            //SPRINT
+            if (Input.GetKey(KeyCode.LeftShift))
+            {
+                inputs.sprint = true;
+            }
+
             /* DISABLED ACTIONS, ANIMATIONS ONLY AVAILABLE IN THE FULL VERSION
             //RUN SLIDE
             if(Input.GetKeyDown(KeyCode.LeftControl))
@@ -403,18 +409,13 @@ namespace KevinIglesias
             {
                 inputs.roll = true;
             }
-            
+
             //CROUCH
-            if(Input.GetKey(KeyCode.LeftControl))
+            if (Input.GetKey(KeyCode.C))
             {
                 inputs.crouch = true;
-            }*/
-
-            //SPRINT
-            if (Input.GetKey(KeyCode.LeftShift))
-            {
-                inputs.sprint = true;
             }
+            */
 
             // //SWITCH CHARACTER
             // if (Input.GetKeyDown(KeyCode.Tab))
@@ -872,7 +873,7 @@ namespace KevinIglesias
         {
             Debug.DrawRay(transform.position + collisionBox.center + Vector3.up * 0.5f, transform.forward * interactionRange, Color.red);
 
-            if (Physics.Raycast(transform.position + collisionBox.center, transform.forward, out RaycastHit hit, interactionRange, interactiveLayerMask)) // 상호작용 가능한 물체가 범위 내에 있으면
+            if (Physics.Raycast(transform.position + collisionBox.center + Vector3.up * 0.5f, transform.forward, out RaycastHit hit, interactionRange, interactiveLayerMask)) // 상호작용 가능한 물체가 범위 내에 있으면
             {
                 interactive = true; // 상호작용 가능
                 interactionUI.SetActive(true); // 상호작용 UI 활성화
