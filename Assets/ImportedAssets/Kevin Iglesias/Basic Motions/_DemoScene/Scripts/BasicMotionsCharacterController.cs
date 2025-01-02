@@ -45,8 +45,8 @@ namespace KevinIglesias
         public float turn;
         public bool jump;
         public bool walk;
-        public bool runSlide;
-        public bool roll;
+        // public bool runSlide;
+        // public bool roll;
         public bool crouch;
         public bool sprint;
 
@@ -56,8 +56,8 @@ namespace KevinIglesias
             turn = 0f;
             jump = false;
             walk = false;
-            runSlide = false;
-            roll = false;
+            // runSlide = false;
+            // roll = false;
             crouch = false;
             sprint = false;
         }
@@ -409,13 +409,13 @@ namespace KevinIglesias
             {
                 inputs.roll = true;
             }
+            */
 
             //CROUCH
             if (Input.GetKey(KeyCode.C))
             {
                 inputs.crouch = true;
             }
-            */
 
             // //SWITCH CHARACTER
             // if (Input.GetKeyDown(KeyCode.Tab))
@@ -523,40 +523,40 @@ namespace KevinIglesias
                 moveSpeed = currentSpeed;
             }
 
-            //SLIDE INPUT PRESSED (WHILE SLIDING CHARACTER MOVES USING SLIDE PROPERTIES INSTEAD OF USING moveDirection)
-            if (inputs.runSlide)
-            {
-                if (characterState == CharacterState.Moving) //MAKE SURE SLIDE IS ONLY AVAILABLE WHILE MOVING
-                {
-                    if (timeMoving >= 0.33f && !inputs.walk) //MAKE SURE SLIDE IS ONLY AVAILABLE AFTER MOVING WHILE A CERTAIN AMOUNT OF TIME AND NOT WALKING
-                    {
-                        if (animator.GetBool("Moving"))
-                        {
-                            animator.SetBool("RunSlide", true);
-                            if (impulseMovementCoroutine == null)
-                            {
-                                timeMoving = 0f; //RESET AMOUNT OF TIME MOVING TO AVOID CONSECUTIVE SLIDES
-                                impulseMovementCoroutine = ImpulseMovementCoroutine(slideDistance, slideDuration, slideCurve, inputs.movement);
-                                StartCoroutine(impulseMovementCoroutine);
-                            }
-                        }
-                    }
-                }
-            }
+            // //SLIDE INPUT PRESSED (WHILE SLIDING CHARACTER MOVES USING SLIDE PROPERTIES INSTEAD OF USING moveDirection)
+            // if (inputs.runSlide)
+            // {
+            //     if (characterState == CharacterState.Moving) //MAKE SURE SLIDE IS ONLY AVAILABLE WHILE MOVING
+            //     {
+            //         if (timeMoving >= 0.33f && !inputs.walk) //MAKE SURE SLIDE IS ONLY AVAILABLE AFTER MOVING WHILE A CERTAIN AMOUNT OF TIME AND NOT WALKING
+            //         {
+            //             if (animator.GetBool("Moving"))
+            //             {
+            //                 animator.SetBool("RunSlide", true);
+            //                 if (impulseMovementCoroutine == null)
+            //                 {
+            //                     timeMoving = 0f; //RESET AMOUNT OF TIME MOVING TO AVOID CONSECUTIVE SLIDES
+            //                     impulseMovementCoroutine = ImpulseMovementCoroutine(slideDistance, slideDuration, slideCurve, inputs.movement);
+            //                     StartCoroutine(impulseMovementCoroutine);
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
 
-            //ROLL INPUT PRESSED (WHILE ROLLING CHARACTER MOVES USING ROLL PROPERTIES INSTEAD OF USING moveDirection)
-            if (inputs.roll)
-            {
-                if (characterState == CharacterState.Idle || characterState == CharacterState.Moving)
-                {
-                    animator.SetBool("Roll", true);
-                    if (impulseMovementCoroutine == null)
-                    {
-                        impulseMovementCoroutine = ImpulseMovementCoroutine(rollDistance, rollDuration, rollCurve, inputs.movement);
-                        StartCoroutine(impulseMovementCoroutine);
-                    }
-                }
-            }
+            // //ROLL INPUT PRESSED (WHILE ROLLING CHARACTER MOVES USING ROLL PROPERTIES INSTEAD OF USING moveDirection)
+            // if (inputs.roll)
+            // {
+            //     if (characterState == CharacterState.Idle || characterState == CharacterState.Moving)
+            //     {
+            //         animator.SetBool("Roll", true);
+            //         if (impulseMovementCoroutine == null)
+            //         {
+            //             impulseMovementCoroutine = ImpulseMovementCoroutine(rollDistance, rollDuration, rollCurve, inputs.movement);
+            //             StartCoroutine(impulseMovementCoroutine);
+            //         }
+            //     }
+            // }
 
             //JUMP INPUT PRESSED
             if (inputs.jump)
