@@ -710,6 +710,11 @@ namespace KevinIglesias
             return obstacleDetected;
         }
 
+        // void OnCollisionEnter(Collision collision)
+        // {
+        //     Debug.Log(collision.gameObject.name + " 충돌!");
+        // }
+
         ///CHECK COLLISIONS TOUCHING CHARACTER BOX COLLIDER 
         private void CheckCollisions()
         {
