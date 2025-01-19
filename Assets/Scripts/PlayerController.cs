@@ -9,10 +9,9 @@ public class InputSent
     public float turn;
     public bool jump;
     public bool walk;
-    // public bool runSlide;
-    // public bool roll;
     public bool crouch;
     public bool sprint;
+    public bool fire;
 
     public void Clear()
     {
@@ -20,10 +19,9 @@ public class InputSent
         turn = 0f;
         jump = false;
         walk = false;
-        // runSlide = false;
-        // roll = false;
         crouch = false;
         sprint = false;
+        fire = false;
     }
 }
 
@@ -34,7 +32,6 @@ public class PlayerController : MonoBehaviour
     public int mapLayer = 7;
     public float jumpForce = 5f;
     public Transform bottomTransform;
-    public GameObject controlsWindow;
     public GameObject interactionUI; // 상호작용 UI
     public float interactionRange = 2.5f; // 상호작용 가능한 범위(OverlapSphere 반지름)
 
@@ -61,6 +58,8 @@ public class PlayerController : MonoBehaviour
     public Vector3 crouchColCenter;
     public float crouchColHeight;
 
+    public int characterId; // 캐릭터 아이디(캐릭터 식별 정보 - 0 : 데릭 / 1 : 소피아 / 2 : 에단 / 3 : 분신)
+
 
     Rigidbody rigid;
     InputSent inputs;
@@ -68,7 +67,6 @@ public class PlayerController : MonoBehaviour
     float inputZ;
     bool isGrounded;
     float movementInputSpeed = 6f;
-    bool isJumping;
     Animator interactionAnim; // 상호작용하는 물체의 애니메이터
     LayerMask interactiveLayerMask; // 상호작용 가능한 오브젝트 레이어 마스크
     bool interactive; // 상호작용 가능 여부
@@ -80,6 +78,10 @@ public class PlayerController : MonoBehaviour
     Vector3 defaultColCenter;
     float defaultColHeight;
 
+    bool isHoldingGun;
+
+    ISupernatural supernatural;
+
 
     void Awake()
     {
@@ -89,6 +91,8 @@ public class PlayerController : MonoBehaviour
 
         defaultColCenter = col.center;
         defaultColHeight = col.height;
+
+        supernatural = GetComponent<ISupernatural>(); // 초능력 인터페이스
     }
 
     void Start()
@@ -100,8 +104,11 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // 입력 받기
-        GetInputs();
+        if (GameManager.instance.selectCharacterId == characterId)
+        {
+            // 입력 받기
+            GetInputs();
+        }
 
         ChangeColliderSize();
 
@@ -117,7 +124,7 @@ public class PlayerController : MonoBehaviour
         // 8방향 이동
         float targetInputX = Input.GetAxisRaw("Horizontal");
         float targetInputZ = Input.GetAxisRaw("Vertical");
-        // inputs.movement = new Vector2(targetInputX, targetInputY);
+        inputs.movement = new Vector2(targetInputX, targetInputZ);
         // 부드럽게 변화하도록 X, Z 값 조정
         inputX = Mathf.MoveTowards(inputX, targetInputX, movementInputSpeed * Time.deltaTime);
         inputZ = Mathf.MoveTowards(inputZ, targetInputZ, movementInputSpeed * Time.deltaTime);
@@ -152,15 +159,14 @@ public class PlayerController : MonoBehaviour
             inputs.jump = true;
         }
 
-
         // 웅크려 앉기
         if (Input.GetKey(KeyCode.C))
         {
             inputs.crouch = true;
         }
 
-        // G키를 누르면 상호작용
-        if (Input.GetKeyDown(KeyCode.G))
+        // F키 -> 상호작용
+        if (Input.GetKeyDown(KeyCode.F))
         {
             if (interactive) // 상호작용 가능하면(=상호작용 범위 내에 가능한 물체가 있으면)
             {
@@ -168,27 +174,42 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // 컨트롤 UI 켜기/끄기
-        if (Input.GetKeyDown(KeyCode.Escape))
+        // R키 -> 초능력
+        if (Input.GetKeyDown(KeyCode.R))
         {
-            controlsWindow.SetActive(!controlsWindow.activeInHierarchy);
+            supernatural.Activate();
+        }
 
-            if (Cursor.lockState == CursorLockMode.Locked)
+
+
+        // 총 쏘기
+        if (Input.GetMouseButton(0))
+        {
+            inputs.fire = true;
+        }
+
+        // 인벤토리 1번 꺼내기/숨기기
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            // 인벤토리 확인 코드 추가
+
+            isHoldingGun = !isHoldingGun;
+            Debug.Log("isHoldingGun : " + isHoldingGun);
+        }
+
+        // 인벤토리 현재 클릭된 오브젝트 버리기
+        if (Input.GetKeyDown(KeyCode.Q))
+        {
+            if (isHoldingGun)
             {
-                Cursor.lockState = CursorLockMode.None; // 커서 해제
-                Cursor.visible = true; // 커서 보이기
-            }
-            else
-            {
-                Cursor.lockState = CursorLockMode.Locked; // 커서 고정
-                Cursor.visible = false; // 커서 숨기기
+                isHoldingGun = false;
             }
         }
     }
 
     void ControlCharacter()
     {
-        //BY DEFAULT USE RUN SPEED
+        // 기본 속도로 초기화
         float currentSpeed = runSpeed;
 
         // 회전 애니메이션 적용
@@ -263,6 +284,17 @@ public class PlayerController : MonoBehaviour
             Debug.Log("점프!");
             anim.SetBool("Jump", true);
         }
+
+        // 총 쏘기 애니메이션 적용
+        if (inputs.fire && isHoldingGun)
+        {
+            Debug.Log("사격!");
+            anim.SetBool("Fire", true);
+        }
+        else
+        {
+            anim.SetBool("Fire", false);
+        }
     }
 
     void FixedUpdate()
@@ -276,7 +308,7 @@ public class PlayerController : MonoBehaviour
         rigid.MovePosition(rigid.position + moveDir * moveSpeed * Time.fixedDeltaTime);
 
         // 회전
-        Vector3 rotation = new Vector3(0, inputs.turn, 0) * turnSpeed * Time.deltaTime;
+        Vector3 rotation = new Vector3(0, inputs.turn, 0) * turnSpeed * Time.fixedDeltaTime;
         Quaternion deltaRotation = Quaternion.Euler(rotation);
         rigid.MoveRotation(rigid.rotation * deltaRotation);
 
@@ -316,7 +348,12 @@ public class PlayerController : MonoBehaviour
         if (Physics.Raycast(transform.position + col.center + Vector3.up * 0.5f, transform.forward, out RaycastHit hit, interactionRange, interactiveLayerMask)) // 상호작용 가능한 물체가 범위 내에 있으면
         {
             interactive = true; // 상호작용 가능
-            interactionUI.SetActive(true); // 상호작용 UI 활성화
+            if (GameManager.instance.selectCharacterId == characterId) // 현재 선택된 캐릭터가 상호작용 가능하다면(나머지 캐릭터에 의해 상호작용 UI가 제어되면 안됨)
+            {
+                UIManager.instance.ShowInteractionUI(); // 상호작용 UI 활성화
+            }
+
+            Debug.Log(gameObject.name);
 
             if (interact) // 상호작용하는 상태면
             {
@@ -337,7 +374,10 @@ public class PlayerController : MonoBehaviour
         else // 상호작용 가능한 물체가 범위 내에 없으면
         {
             interactive = false; // 상호작용 불가능
-            interactionUI.SetActive(false); // 상호작용 UI 비활성화
+            if (GameManager.instance.selectCharacterId == characterId) // 현재 선택된 캐릭터가 상호작용 가능하다면(나머지 캐릭터에 의해 상호작용 UI가 제어되면 안됨)
+            {
+                UIManager.instance.HideInteractionUI(); // 상호작용 UI 비활성화
+            }
         }
     }
 

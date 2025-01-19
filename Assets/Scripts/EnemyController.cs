@@ -7,8 +7,7 @@ public class EnemyController : MonoBehaviour
 {
     public Animator anim;
     public BoxCollider collisionBox;
-    public Transform target; // 타겟 = 플레이어
-    float sightDistance = 10f;
+    public List<Transform> targets; // 타겟 = 플레이어들
 
     NavMeshAgent nav;
     Vector2 moveVec;
@@ -16,12 +15,22 @@ public class EnemyController : MonoBehaviour
     float fovAngle = 110f; // 시야각
     bool playerInSight = false; // 플레이어가 시야 내에 있는지 여부
     Vector3 originalPos;
+    Transform closeTarget;
+    Vector3 dirToCloseTarget;
+    Vector3 targetPos;
+    float sightDistance = 10f; // 시야 내에서 탐지할 수 있는 거리
+    float detectDistance = 2.4f; // 시야 밖에서 탐지할 수 있는 거리
 
     void Awake()
     {
         nav = GetComponent<NavMeshAgent>();
         playerLayerMask = LayerMask.GetMask("Player");
         originalPos = transform.position;
+    }
+
+    void Start()
+    {
+        StartCoroutine(TrackingTarget()); // 타겟 추적
     }
 
     // Update is called once per frame
@@ -36,38 +45,61 @@ public class EnemyController : MonoBehaviour
         {
             anim.SetBool("Moving", true);
         }
+    }
 
-        Vector3 dirToTarget = target.position - transform.position; // 타겟과 적 간의 방향 벡터 계산
+    IEnumerator TrackingTarget()
+    {
+        targetPos = originalPos;
 
-        float angleToTarget = Vector3.Angle(transform.forward, dirToTarget); // 앞을 바라보는 방향 벡터와 타겟과 적 간의 방향 벡터 사이의 각도 계산
-
-        if (angleToTarget < fovAngle / 2f && dirToTarget.magnitude <= sightDistance) // 각도는 시야 각의 절반과 비교해야 함
+        while (true)
         {
-            if (Physics.Raycast(transform.position + collisionBox.center + Vector3.up * 0.5f, dirToTarget.normalized, out RaycastHit hit, sightDistance, playerLayerMask))
+            // 변수 초기화
+            closeTarget = null; // 가장 가까운 타겟
+            dirToCloseTarget = targets[0].position - transform.position; // 가장 가까운 타겟의 방향
+
+            // 추적 조건에 맞는 가장 가까운 타겟 탐색
+            foreach (Transform target in targets)
             {
-                Debug.Log("타겟 발견 - 추적 중...");
+                Vector3 dirToTarget = target.position - transform.position; // 타겟과 적 간의 방향 벡터 계산
 
-                playerInSight = true;
+                float angleToTarget = Vector3.Angle(transform.forward, dirToTarget); // 앞을 바라보는 방향 벡터와 타겟과 적 간의 방향 벡터 사이의 각도 계산
 
-                // 타겟 추적하기
-                nav.SetDestination(target.position);
+                // Debug.Log(target.name + " | " + (angleToTarget < fovAngle / 2f) + "," + (dirToTarget.magnitude <= sightDistance) + "," + (dirToTarget.magnitude <= detectDistance) + " , " + dirToTarget.magnitude);
+
+                if ((angleToTarget < fovAngle / 2f && dirToTarget.magnitude <= sightDistance) || dirToTarget.magnitude <= detectDistance) // 타겟이 추적 조건에 맞는지 비교(각도는 시야 각의 절반과 비교해야 함)
+                {
+                    if (dirToTarget.magnitude <= dirToCloseTarget.magnitude) // 더 가까운 타겟이면
+                    {
+                        closeTarget = target; // 가장 가까운 타겟 변경
+                        dirToCloseTarget = dirToTarget; // 가장 가까운 타겟의 방향 변경
+                    }
+                }
+            }
+
+            // 적의 이동
+            if (closeTarget) // 추적할 타겟이 있으면
+            {
+                // 타겟 추적
+                targetPos = closeTarget.position;
+                nav.SetDestination(targetPos);
 
                 // 움직이는 방향에 맞는 애니메이션 설정
                 SetAnimMoveVec();
             }
-            else
+            else // 추적할 타겟이 없으면
             {
-                playerInSight = false;
+                // 목적지가 원래 위치가 아닌 경우에 한번만 원래 위치로 초기화
+                if (targetPos != originalPos)
+                {
+                    // 원래 위치로 이동
+                    targetPos = originalPos;
+                    nav.SetDestination(targetPos);
+                }
             }
-        }
-        else
-        {
-            playerInSight = false;
-        }
 
-        if (!playerInSight)
-        {
-            nav.SetDestination(originalPos); // 원래 위치로 이동
+            // Debug.Log(closeTarget);
+
+            yield return new WaitForSeconds(0.5f);
         }
     }
 
@@ -79,6 +111,9 @@ public class EnemyController : MonoBehaviour
         Gizmos.color = Color.blue;
         Gizmos.DrawLine(transform.position, transform.position + leftBoundary * sightDistance);
         Gizmos.DrawLine(transform.position, transform.position + rightBoundary * sightDistance);
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(transform.position, transform.position + Vector3.forward * detectDistance);
     }
 
     // 움직이는 방향에 맞는 애니메이션 설정
