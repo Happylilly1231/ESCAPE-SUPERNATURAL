@@ -21,11 +21,16 @@ public class EnemyController : MonoBehaviour
     float sightDistance = 10f; // 시야 내에서 탐지할 수 있는 거리
     float detectDistance = 2.4f; // 시야 밖에서 탐지할 수 있는 거리
 
+    int maxHp = 100;
+    float curHp;
+    int damage = 10;
+
     void Awake()
     {
         nav = GetComponent<NavMeshAgent>();
         playerLayerMask = LayerMask.GetMask("Player");
         originalPos = transform.position;
+        curHp = maxHp;
     }
 
     void Start()
@@ -82,9 +87,6 @@ public class EnemyController : MonoBehaviour
                 // 타겟 추적
                 targetPos = closeTarget.position;
                 nav.SetDestination(targetPos);
-
-                // 움직이는 방향에 맞는 애니메이션 설정
-                SetAnimMoveVec();
             }
             else // 추적할 타겟이 없으면
             {
@@ -96,6 +98,8 @@ public class EnemyController : MonoBehaviour
                     nav.SetDestination(targetPos);
                 }
             }
+            // 움직이는 방향에 맞는 애니메이션 설정
+            SetAnimMoveVec();
 
             // Debug.Log(closeTarget);
 
@@ -132,6 +136,31 @@ public class EnemyController : MonoBehaviour
         // 애니메이터에 파라미터 전달
         anim.SetFloat("InputX", moveVec.x);
         anim.SetFloat("InputY", moveVec.y);
+    }
+
+    public void Damage(int amount)
+    {
+        if (curHp - amount < 0)
+        {
+            curHp = 0;
+            Debug.Log("적이 죽었습니다.");
+            Destroy(gameObject);
+        }
+        else
+        {
+            curHp -= amount;
+        }
+    }
+
+    void OnCollisionEnter(Collision collision)
+    {
+        Attack(collision.gameObject);
+    }
+
+    void Attack(GameObject player)
+    {
+        Debug.Log("적이 플레이어를 공격합니다.");
+        player.GetComponent<PlayerController>().Damage(damage);
     }
 }
 
