@@ -18,6 +18,20 @@ public class UIManager : MonoBehaviour
     public GameObject[] characterBtns; // 따라오게 할 캐릭터 선택 배열
     public Slider hpBar; // 캐릭터 체력 바
 
+    public GameObject hpBarPrefab; // 체력 바 프리팹
+
+    public Image crosshair; // 조준점 이미지
+
+    // 초능력 쿨타임
+    public Image cooldownImg; // 초능력 쿨타임 이미지
+    public Image cooldownDisableImg; // 초능력 쿨타임 남은 시간 이미지
+    public TextMeshProUGUI cooldownRemainTimeText; // 초능력 쿨타임 남은 시간 텍스트
+
+    // 초능력 지속 시간
+    public Image durationImg; // 초능력 지속시간 이미지
+    public Image duraitonDisableImg; // 초능력 남은 지속시간 이미지
+    public TextMeshProUGUI durationRemainTimeText; // 초능력 남은 지속시간 텍스트
+
     void Awake()
     {
         if (instance == null)
@@ -81,6 +95,7 @@ public class UIManager : MonoBehaviour
         interactionUI.SetActive(false);
     }
 
+    // 무기 이미지 변경 함수
     public void ChangeWeaponImg(int equipWeaponId, int weaponId)
     {
         if (weaponId == -1)
@@ -89,7 +104,8 @@ public class UIManager : MonoBehaviour
             equipWeaponImgs[equipWeaponId].sprite = weaponImgs[weaponId];
     }
 
-    public void ResetCharacterBtn(int selectCharacterId)
+    // 따라오기 선택 캐릭터 버튼 변경 함수
+    public void ResetFollowCharacterBtn(int selectCharacterId)
     {
         for (int i = 0; i < 3; i++)
         {
@@ -101,8 +117,13 @@ public class UIManager : MonoBehaviour
     }
 
     // 캐릭터 변경했을 때 기본 UI 설정 함수
-    public void PlayingCharacterSetting(PlayerController playerController)
+    public void PlayingCharacterSetting(int selectCharacterId)
     {
+        PlayerController playerController = GameManager.instance.characters[selectCharacterId].GetComponent<PlayerController>();
+
+        // 따라오기 선택 캐릭터 버튼 변경
+        ResetFollowCharacterBtn(selectCharacterId);
+
         // 현재 선택한 플레이어의 무기로 이미지 변경
         for (int i = 0; i < 3; i++)
         {
@@ -112,8 +133,19 @@ public class UIManager : MonoBehaviour
                 ChangeWeaponImg(i, playerController.equipWeapons[i].GetComponent<Weapon>().weaponId);
         }
 
-        characterName.text = playerController.gameObject.name;
-        SetHpBar(playerController.CurHp / playerController.MaxHp);
+        characterName.text = playerController.gameObject.name; // 캐릭터 이름 설정
+        SetHpBar(playerController.CurHp / playerController.MaxHp); // 체력바 설정
+
+        // 초능력 쿨타임 변경
+        // 초능력 쿨타임 이미지 바꾸기 코드 추가
+        cooldownDisableImg.fillAmount = 0;
+        cooldownRemainTimeText.text = "";
+
+        // 초능력 지속시간 변경
+        // 초능력 지속시간 이미지 바꾸기 코드 추가
+        duraitonDisableImg.fillAmount = 0;
+        durationRemainTimeText.text = "";
+        Debug.Log("---" + cooldownRemainTimeText.text);
     }
 
     public void SetHpBar(float value)

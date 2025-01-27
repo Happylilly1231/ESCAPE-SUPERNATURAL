@@ -1,17 +1,20 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 
 public class EnemyController : MonoBehaviour
 {
     public Animator anim;
     public BoxCollider collisionBox;
     public List<Transform> targets; // 타겟 = 플레이어들
+    public Transform hpBarPos;
+    public Canvas canvas;
 
     NavMeshAgent nav;
     Vector2 moveVec;
-    LayerMask playerLayerMask;
     float fovAngle = 110f; // 시야각
     bool playerInSight = false; // 플레이어가 시야 내에 있는지 여부
     Vector3 originalPos;
@@ -25,20 +28,22 @@ public class EnemyController : MonoBehaviour
     float curHp;
     int damage = 10;
 
+    public Slider hpBar;
+    public TextMeshProUGUI hpTxt;
+
     void Awake()
     {
         nav = GetComponent<NavMeshAgent>();
-        playerLayerMask = LayerMask.GetMask("Player");
         originalPos = transform.position;
         curHp = maxHp;
     }
 
     void Start()
     {
+        // hpBar = Instantiate(UIManager.instance.hpBarPrefab, canvas.transform);
         StartCoroutine(TrackingTarget()); // 타겟 추적
     }
 
-    // Update is called once per frame
     void Update()
     {
         // 속력에 따라 Moving 상태 설정
@@ -50,6 +55,16 @@ public class EnemyController : MonoBehaviour
         {
             anim.SetBool("Moving", true);
         }
+
+        // 체력바 위치 업데이트
+        // Vector3 screenPos = GameManager.instance.mainCamera.WorldToScreenPoint(hpBarPos.position);
+        // hpBar.transform.position = screenPos;
+        // Vector3 dirToCamera = GameManager.instance.mainCamera.transform.position - hpBar.transform.position;
+        // dirToCamera.y = 0;
+        // hpBar.transform.rotation = Quaternion.LookRotation(dirToCamera);
+        // Debug.Log(dirToCamera);
+
+        canvas.transform.LookAt(canvas.transform.position + GameManager.instance.mainCamera.transform.rotation * Vector3.forward, GameManager.instance.mainCamera.transform.rotation * Vector3.up);
     }
 
     IEnumerator TrackingTarget()
@@ -143,12 +158,16 @@ public class EnemyController : MonoBehaviour
         if (curHp - amount < 0)
         {
             curHp = 0;
+            hpBar.value = 0;
+            hpTxt.text = "0 / " + maxHp.ToString();
             Debug.Log("적이 죽었습니다.");
             Destroy(gameObject);
         }
         else
         {
             curHp -= amount;
+            hpBar.value = curHp / maxHp;
+            hpTxt.text = curHp.ToString() + " / " + maxHp.ToString();
         }
     }
 

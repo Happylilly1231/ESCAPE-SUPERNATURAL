@@ -14,6 +14,11 @@ public class GameManager : MonoBehaviour
 
     public GameObject[] characters; // 초능력자 캐릭터 배열
 
+    // 레이어 마스크
+    public LayerMask mapLayerMask; // 맵 레이어 마스크
+    public LayerMask playerLayerMask; // 플레이어 레이어 마스크
+    public LayerMask enemyLayerMask; // 적 레이어 마스크
+
     void Awake()
     {
         if (instance == null)
@@ -24,6 +29,11 @@ public class GameManager : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        // 레이어 마스크 할당
+        mapLayerMask = LayerMask.GetMask("Map");
+        playerLayerMask = LayerMask.GetMask("Player");
+        enemyLayerMask = LayerMask.GetMask("Enemy");
     }
 
     void Start()
@@ -32,7 +42,7 @@ public class GameManager : MonoBehaviour
         mainCamera = characterCameras[0].GetComponent<Camera>();
         characterCameras[1].SetActive(false);
         characterCameras[2].SetActive(false);
-        UIManager.instance.PlayingCharacterSetting(characters[selectCharacterId].GetComponent<PlayerController>());
+        UIManager.instance.PlayingCharacterSetting(selectCharacterId);
     }
 
     void Update()
@@ -46,8 +56,7 @@ public class GameManager : MonoBehaviour
         characterCameras[id].SetActive(true); // 선택한 캐릭터 카메라 활성화
         mainCamera = characterCameras[id].GetComponent<Camera>();
         selectCharacterId = id; // 선택한 캐릭터로 변경
-        UIManager.instance.ResetCharacterBtn(selectCharacterId);
-        UIManager.instance.PlayingCharacterSetting(characters[selectCharacterId].GetComponent<PlayerController>());
+        UIManager.instance.PlayingCharacterSetting(selectCharacterId); // 캐릭터 변경에 따른 기본 UI 초기화
     }
 
     public void Pause()

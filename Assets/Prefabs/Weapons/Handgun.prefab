@@ -530,7 +530,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &2889757421994846710
 Transform:
   m_ObjectHideFlags: 0
@@ -571,8 +571,9 @@ MonoBehaviour:
   originalRotation: {x: 0, y: 0, z: 0}
   maxBulletCnt: 7
   weaponId: 1
-  bulletSpeed: 70
+  bulletSpeed: 40
   fireDistance: 5
+  canFire: 0
 --- !u!1 &2889757421994685918
 GameObject:
   m_ObjectHideFlags: 0

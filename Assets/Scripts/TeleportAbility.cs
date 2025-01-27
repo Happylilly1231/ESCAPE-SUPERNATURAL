@@ -5,19 +5,20 @@ using UnityEngine;
 // 순간이동 초능력
 public class TeleportAbility : MonoBehaviour, ISupernatural
 {
-    public Camera mainCamera; // 카메라
     public GameObject teleportPosCircle; // 순간이동 목표 위치를 나타내는 원
     float limitDistance = 10f; // 제한 거리
-    LayerMask mapLayerMask;
+    bool canUIUpdate;
 
-    void Awake()
-    {
-        mapLayerMask = LayerMask.GetMask("Map");
-    }
+    public bool CanUIUpdate { get => canUIUpdate; set => canUIUpdate = value; }
 
     public void Activate()
     {
         StartCoroutine(Teleport()); // 순간이동 코루틴 실행
+    }
+
+    public void Deactivate()
+    {
+        CanUIUpdate = false;
     }
 
     // 순간 이동
@@ -28,8 +29,8 @@ public class TeleportAbility : MonoBehaviour, ISupernatural
         while (true)
         {
             // 위치 조정
-            Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition); // 마우스 방향으로 화면에서 레이 쏘기
-            if (Physics.Raycast(ray, out RaycastHit hit, limitDistance, mapLayerMask)) // 맵 레이어만 검출하고 제한 거리 내에서만 가능
+            Ray ray = GameManager.instance.mainCamera.ScreenPointToRay(Input.mousePosition); // 마우스 방향으로 화면에서 레이 쏘기
+            if (Physics.Raycast(ray, out RaycastHit hit, limitDistance, GameManager.instance.mapLayerMask)) // 맵 레이어만 검출하고 제한 거리 내에서만 가능
             {
                 teleportPosCircle.transform.position = hit.point; // 충돌 지점에 원 표시
             }

@@ -15,6 +15,7 @@ public class InputSent
     public bool crouch;
     public bool sprint;
     public bool fire;
+    public bool aim;
     public bool interact;
     // public bool holdWeapon1;
     // public bool holdWeapon2;
@@ -29,6 +30,7 @@ public class InputSent
         crouch = false;
         sprint = false;
         fire = false;
+        aim = false;
     }
 }
 
@@ -71,6 +73,8 @@ public class PlayerController : MonoBehaviour
     public GameObject[] weapons; // 무기 배열
     public GameObject[] equipWeapons; // 장착 무기 배열(주무기 : 1, 2 / 보조무기 : 3)
 
+    public float supernaturalCoolDown; // 초능력 쿨타임 (초 단위)
+    bool isSupernaturalReady = true; // 초능력 사용 가능 여부
 
     Rigidbody rigid;
     InputSent inputs;
@@ -108,6 +112,14 @@ public class PlayerController : MonoBehaviour
     public int MaxHp { get => maxHp; set => maxHp = value; }
     public float CurHp { get => curHp; set => curHp = value; }
 
+    bool isAiming;
+
+    bool isCheckingFireAnimationEnd;
+
+    float cooldownRemainTime;
+
+    bool canUIUpdate;
+
     void Awake()
     {
         rigid = GetComponent<Rigidbody>();
@@ -143,6 +155,8 @@ public class PlayerController : MonoBehaviour
             {
                 nav.enabled = false;
                 isPlayingCharacter = true;
+                supernatural.CanUIUpdate = true;
+                canUIUpdate = true;
             }
 
             // 입력 받기
@@ -159,6 +173,8 @@ public class PlayerController : MonoBehaviour
             {
                 nav.enabled = true;
                 isPlayingCharacter = false;
+                supernatural.Deactivate();
+                canUIUpdate = false;
             }
 
             // 따라갈 캐릭터가 있다면 추적
@@ -254,6 +270,7 @@ public class PlayerController : MonoBehaviour
         inputs.crouch = Input.GetKey(KeyCode.C); // 웅크려 앉기
         inputs.interact = Input.GetKeyDown(KeyCode.F); // 상호작용
         inputs.fire = Input.GetMouseButtonDown(0); // 공격
+        inputs.aim = Input.GetMouseButtonDown(1); // 조준
 
         if (Input.GetKeyDown(KeyCode.Alpha1)) // 주무기 1번
         {
@@ -289,9 +306,10 @@ public class PlayerController : MonoBehaviour
         }
 
         // 초능력
-        if (Input.GetKeyDown(KeyCode.R))
+        if (Input.GetKeyDown(KeyCode.R) && isSupernaturalReady)
         {
             supernatural.Activate();
+            StartCoroutine(UpdateSupernaturalCooldown()); // 쿨타임 업데이트 시작
         }
 
         // 첫번째 캐릭터 따라오게 하기
@@ -339,6 +357,29 @@ public class PlayerController : MonoBehaviour
 
         //     Debug.Log("isHoldingGun : " + isHoldingGun);
         // }
+    }
+
+    // 초능력 쿨타임 업데이트 함수
+    IEnumerator UpdateSupernaturalCooldown()
+    {
+        isSupernaturalReady = false;
+
+        cooldownRemainTime = supernaturalCoolDown;
+        while (cooldownRemainTime > 0)
+        {
+            cooldownRemainTime -= Time.deltaTime;
+
+            if (canUIUpdate)
+            {
+                UIManager.instance.cooldownDisableImg.fillAmount = cooldownRemainTime / supernaturalCoolDown;
+                UIManager.instance.cooldownRemainTimeText.text = cooldownRemainTime.ToString("F1") + "s";
+            }
+            yield return null;
+        }
+        if (canUIUpdate)
+            UIManager.instance.cooldownRemainTimeText.text = "";
+
+        isSupernaturalReady = true;
     }
 
     void ControlCharacter()
@@ -419,13 +460,87 @@ public class PlayerController : MonoBehaviour
             anim.SetBool("Jump", true);
         }
 
-        // 총 쏘기
-        Debug.Log(inputs.fire + " , " + isHoldingWeapon);
-        if (inputs.fire && isHoldingWeapon)
+        // 총을 들고 있을 때
+        if (isHoldingWeapon)
         {
-            Debug.Log("사격!");
-            anim.SetTrigger("Fire");
-            equipWeapons[selectWeaponId].GetComponent<Weapon>().Use();
+            Weapon weapon = equipWeapons[selectWeaponId].GetComponent<Weapon>();
+
+            // 총 쏘기
+            if (inputs.fire)
+            {
+                Debug.Log("사격!");
+                if (weapon.canFire)
+                {
+                    anim.SetTrigger("Fire");
+                    weapon.Use(gameObject);
+                    isCheckingFireAnimationEnd = true;
+                }
+            }
+
+            // 총 각도 원래대로 변경
+            SetWeaponToOrignalRotation(weapon);
+
+            // 조준하기
+            if (inputs.aim)
+            {
+                if (!isAiming)
+                {
+                    isAiming = true;
+                    Debug.Log("조준");
+                    StartCoroutine(Aim());
+                    // anim.SetTrigger("Aim");
+                    // GameManager.instance.mainCamera.transform.position += transform.forward * 1f;
+                }
+                else
+                {
+                    isAiming = false;
+                    Debug.Log("조준 해제");
+                    // GameManager.instance.mainCamera.transform.position -= transform.forward * 1f;
+                }
+            }
+        }
+    }
+
+    // 총 각도 원래대로 변경하는 함수
+    void SetWeaponToOrignalRotation(Weapon weapon)
+    {
+        // 총 각도 원래대로 변경
+        if (isCheckingFireAnimationEnd && weapon.canFire)
+        {
+            if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Fire"))
+            {
+                equipWeapons[selectWeaponId].transform.localRotation = Quaternion.Euler(weapon.originalRotation); // 총 각도 원래대로 변경(들고 있는 각도)
+                isCheckingFireAnimationEnd = false;
+            }
+        }
+    }
+
+    // 조준 코루틴
+    IEnumerator Aim()
+    {
+        while (isAiming)
+        {
+            // 카메라 중앙 방향 계산
+            Ray ray = GameManager.instance.mainCamera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2));
+
+            if (Physics.Raycast(ray, out RaycastHit hit, 10f, GameManager.instance.enemyLayerMask))
+            {
+                if (hit.collider.gameObject.tag == "Enemy")
+                {
+                    UIManager.instance.crosshair.color = Color.red;
+                    Debug.Log(hit.collider.gameObject.name + "을(를) 조준 중입니다.");
+                    Debug.Log("적이 총알에 맞았습니다!");
+                }
+                else
+                {
+                    UIManager.instance.crosshair.color = Color.cyan;
+                }
+            }
+            else
+            {
+                UIManager.instance.crosshair.color = Color.cyan;
+            }
+            yield return null;
         }
     }
 
@@ -525,7 +640,7 @@ public class PlayerController : MonoBehaviour
         {
             if (curWeaponId != -1) // 현재 선택한 무기가 있는 경우
             {
-                equipWeapons[curWeaponId].transform.localRotation = Quaternion.Euler(equipWeapons[curWeaponId].GetComponent<Weapon>().originalRotation); // 총 각도 원래대로 변경(들고 있는 각도)
+                // equipWeapons[curWeaponId].transform.localRotation = Quaternion.Euler(equipWeapons[curWeaponId].GetComponent<Weapon>().originalRotation); // 총 각도 원래대로 변경(들고 있는 각도)
                 equipWeapons[curWeaponId].SetActive(false); // 그 무기 선택 해제(비활성화)
                 curWeaponId = -1; // 현재 선택된 무기 없음
                 isHoldingWeapon = false; // 현재 무기 들고 있지 않음
@@ -537,14 +652,14 @@ public class PlayerController : MonoBehaviour
                 curWeaponId = selectWeaponId; // 현재 선택된 무기 변경
 
                 isHoldingWeapon = true; // 현재 총 들고 있음
-                equipWeapons[curWeaponId].transform.localRotation = Quaternion.Euler(equipWeapons[curWeaponId].GetComponent<Weapon>().fireRotation); // 총 각도 변경(발사 각도)
+                // equipWeapons[curWeaponId].transform.localRotation = Quaternion.Euler(equipWeapons[curWeaponId].GetComponent<Weapon>().fireRotation); // 총 각도 변경(발사 각도)
             }
         }
         else // 무기 선택 해제 경우
         {
             if (curWeaponId != -1) // 현재 선택한 무기가 있는 경우
             {
-                equipWeapons[curWeaponId].transform.localRotation = Quaternion.Euler(equipWeapons[curWeaponId].GetComponent<Weapon>().originalRotation); // 총 각도 원래대로 변경(들고 있는 각도)
+                // equipWeapons[curWeaponId].transform.localRotation = Quaternion.Euler(equipWeapons[curWeaponId].GetComponent<Weapon>().originalRotation); // 총 각도 원래대로 변경(들고 있는 각도)
                 equipWeapons[curWeaponId].SetActive(false); // 그 무기 선택 해제(비활성화)
                 curWeaponId = -1; // 현재 선택된 무기 없음
                 isHoldingWeapon = false; // 현재 무기 들고 있지 않음
