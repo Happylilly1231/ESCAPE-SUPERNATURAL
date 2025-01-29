@@ -5,105 +5,107 @@ using UnityEngine.AI;
 
 public class CloneController : MonoBehaviour
 {
-    public Animator anim;
-    Vector3 targetPos;
+    public Animator anim; // 분신 애니메이터
     public GameObject[] weapons; // 무기 배열
-    public GameObject cloningAbilityCharacter;
+    public GameObject cloningAbilityCharacter; // 분신술 캐릭터
 
     NavMeshAgent nav;
     Vector2 moveVec;
-    float fovAngle = 110f; // 시야각
-    bool playerInSight = false; // 플레이어가 시야 내에 있는지 여부
-    Transform closeTarget;
-    Vector3 dirToCloseTarget;
-    float sightDistance = 10f; // 시야 내에서 탐지할 수 있는 거리
-    float detectDistance = 5f; // 시야 밖에서 탐지할 수 있는 거리
+    float detectDistance = 5f; // 적 탐지 거리(시야각 고려 X)
+    Vector3 targetPos; // 목표 위치
 
-    int maxHp = 100;
-    float curHp;
-    int damage = 10;
+    int maxHp = 100; // 최대 체력
+    float curHp; // 현재 체력
 
-    public bool isFollow;
-    bool isCurFollow;
-    bool isMovingToTargetPos;
-    float stopDistance = 0.1f;
+    bool isMovingToTargetPos; // 목표 위치로 이동하고 있는지 여부
+    float stopDistance = 0.1f; // nav가 이동을 멈추는 거리
 
-    bool isCheckingFireAnimationEnd;
-    GameObject selectedWeapon;
+    GameObject holdingWeapon; // 들고 있는 무기(분신술 캐릭터가 가지고 있는 무기 중 앞 순서부터 선택됨)
+
+    bool isCurFollow; // 현재 분신이 분신술 캐릭터를 따라가고 있는지 여부
+    bool isFollow; // 분신이 분신술 캐릭터 따라오기 선택 여부
+
+    public bool IsFollow { get => isFollow; set => isFollow = value; }
 
     void Awake()
     {
         nav = GetComponent<NavMeshAgent>();
-        curHp = maxHp;
     }
 
+    // 분신을 생성할 때(분신이 활성화될 때) 실행되는 함수
     void OnEnable()
     {
-        // isMovingToTargetPos = false;
-        isFollow = false;
+        // 초기화
+        nav.enabled = true; // NavMeshAgent 다시 활성화
+        curHp = maxHp; // 현재 체력 최대 체력으로 설정
+        isMovingToTargetPos = false;
         isCurFollow = false;
-        nav.isStopped = true;
+        IsFollow = false;
 
-        anim.SetBool("Moving", false);
-
-        nav.isStopped = true;
-
-        StartCoroutine(TrackingTarget()); // 타겟 추적
-        StartCoroutine(FollowCloningAbilityCharacter());
-
+        // 모든 무기 비활성화
         foreach (GameObject weapon in weapons)
         {
             weapon.SetActive(false);
         }
+
+        StartCoroutine(FindClosestEnemy()); // 주변에 있는 적들 중 가장 가까운 적을 찾는 코루틴 실행
+        StartCoroutine(FollowCloningAbilityCharacter());
     }
 
+    // 분신술 캐릭터가 설정한 목표 위치로 이동하는 함수
     public void MoveToTargetPos(Vector3 pos)
     {
-        isMovingToTargetPos = true;
-        targetPos = pos;
-        nav.SetDestination(targetPos);
-        stopDistance = 0.1f;
+        isMovingToTargetPos = true; // 
+        targetPos = pos; // 목표 위치 설정
+        nav.SetDestination(targetPos); // NavMeshAgent로 목표 위치로 이동
+        stopDistance = 0.1f; // nav가 목표 위치에 도착해야 멈추는 것으로 설정
     }
 
+    // 분신이 분신술 캐릭터를 따라가는 함수
     IEnumerator FollowCloningAbilityCharacter()
     {
-        while (isFollow)
+        while (IsFollow) // 
         {
             Debug.Log("분신이 따라가는 중...");
-            targetPos = cloningAbilityCharacter.transform.position;
-            nav.SetDestination(targetPos);
-            stopDistance = 3f;
+            targetPos = cloningAbilityCharacter.transform.position; // 목표 위치를 분신술 캐릭터 위치로 설정
+            nav.SetDestination(targetPos); // NacMeshAgent로 목표 위치로 이동
+            stopDistance = 3f; // 일정 거리만큼 가까워지면 멈추는 것으로 설정
 
             yield return new WaitForSeconds(0.5f);
         }
-        isCurFollow = false;
+        isCurFollow = false; // 현재 분신이 분신술 캐릭터를 따라가고 있지 않음
     }
 
     void Update()
     {
-        if (!isCurFollow && isFollow)
+        if (!isCurFollow && IsFollow) // 현재 따라가고 있지 않고, 따라오도록 선택했을 때(1번만 실행되기 위해 이렇게 조건 설정)
         {
-            isCurFollow = true;
-            StartCoroutine(FollowCloningAbilityCharacter());
+            isCurFollow = true; // 현재 따라가고 있는 것으로 변경
+            StartCoroutine(FollowCloningAbilityCharacter()); // 분신술 캐릭터를 따라가는 코루틴 실행
+
+            // 멈춤 해제
             nav.isStopped = false;
             anim.SetBool("Moving", true);
         }
-        else if (isCurFollow && !isFollow)
+        else if (isCurFollow && !IsFollow) // 현재 따라가고 있고, 따라오지 않도록 선택했을 때
         {
-            isCurFollow = false;
+            isCurFollow = false; // 현재 따라가고 있지 않은 것으로 변경
+
+            // 멈춤
             nav.isStopped = true;
             anim.SetBool("Moving", false);
         }
 
-        if (isMovingToTargetPos || isFollow)
+        if (isMovingToTargetPos || IsFollow) // 현재 움직이고 있을 때(멈춰있어도 따라가고 있는 중이면 해당)
         {
-            float distanceToTarget = Vector3.Distance(transform.position, targetPos);
-            // 속력에 따라 Moving 상태 설정
+            // 거리에 따라 멈춤 설정
+            float distanceToTarget = Vector3.Distance(transform.position, targetPos); // 목표 위치까지 거리
             if (distanceToTarget < stopDistance)
             {
                 nav.isStopped = true;
                 anim.SetBool("Moving", false);
-                isMovingToTargetPos = false;
+                if (isMovingToTargetPos) // 목표 위치로 가는 중이었으면
+                    isMovingToTargetPos = false; // 목표 위치에 도달했다고 설정
             }
             else
             {
@@ -115,80 +117,33 @@ public class CloneController : MonoBehaviour
         // 움직이는 방향에 맞는 애니메이션 설정
         SetAnimMoveVec();
 
-        // 총이 선택되어있을 때(총을 들고 있을 때)
-        if (selectedWeapon != null)
+        // 총 각도 변경
+        if (holdingWeapon != null) // 총이 선택되어있을 때(총을 들고 있을 때)
         {
-            // 총 각도 원래대로 변경
-            SetWeaponToOrignalRotation(selectedWeapon.GetComponent<Weapon>());
-        }
-    }
+            Weapon weapon = holdingWeapon.GetComponent<Weapon>();
 
-    // 총 각도 원래대로 변경하는 함수
-    void SetWeaponToOrignalRotation(Weapon weapon)
-    {
-        // 총 각도 원래대로 변경
-        if (isCheckingFireAnimationEnd && weapon.canFire)
-        {
-            if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Fire"))
+            bool isPlayingFireAnimation = anim.GetCurrentAnimatorStateInfo(0).IsName("Fire");
+            bool isDoingFireTranstion = anim.GetAnimatorTransitionInfo(0).IsName("Fire -> Idle") || anim.GetAnimatorTransitionInfo(0).IsName("Idle -> Fire");
+
+            if (!isDoingFireTranstion)
             {
-                selectedWeapon.transform.localRotation = Quaternion.Euler(weapon.originalRotation); // 총 각도 원래대로 변경(들고 있는 각도)
-                isCheckingFireAnimationEnd = false;
-            }
-        }
-    }
-
-    IEnumerator TrackingTarget()
-    {
-        while (gameObject.activeSelf)
-        {
-            if (nav.isStopped)
-            {
-                Collider[] hits = Physics.OverlapSphere(transform.position, detectDistance, GameManager.instance.enemyLayerMask);
-
-                GameObject closestEnemy = null;
-                float minDistance = detectDistance + 1f;
-
-                foreach (Collider hit in hits)
+                if (isPlayingFireAnimation)
                 {
-                    float distance = Vector3.Distance(transform.position, hit.transform.position);
-                    if (distance < minDistance)
-                    {
-                        minDistance = distance;
-                        closestEnemy = hit.gameObject;
-                    }
-                }
-
-                Debug.Log("closestEnemy: " + closestEnemy);
-                if (closestEnemy != null)
-                {
-                    Attack(closestEnemy);
-                    yield return new WaitForSeconds(1f);
+                    weapon.canFireBullet = true;
+                    holdingWeapon.transform.localRotation = Quaternion.Euler(weapon.fireRotation); // 총 각도 변경(발사 각도)
                 }
                 else
                 {
-                    if (selectedWeapon != null)
-                    {
-                        selectedWeapon.SetActive(false);
-                        selectedWeapon = null;
-                    }
+                    weapon.canFireBullet = false;
+                    holdingWeapon.transform.localRotation = Quaternion.Euler(weapon.originalRotation);
                 }
             }
-
-            yield return null; // 매 프레임마다가 아니라 0.5초 주기로 반복됨(최적화를 위해서)
+            else
+            {
+                weapon.canFireBullet = false;
+                holdingWeapon.transform.localRotation = Quaternion.Euler(weapon.originalRotation);
+            }
         }
-    }
-
-    void OnDrawGizmos()
-    {
-        Vector3 leftBoundary = Quaternion.Euler(0, -fovAngle / 2f, 0) * transform.forward;
-        Vector3 rightBoundary = Quaternion.Euler(0, fovAngle / 2f, 0) * transform.forward;
-
-        Gizmos.color = Color.blue;
-        Gizmos.DrawLine(transform.position, transform.position + leftBoundary * sightDistance);
-        Gizmos.DrawLine(transform.position, transform.position + rightBoundary * sightDistance);
-
-        Gizmos.color = Color.red;
-        Gizmos.DrawLine(transform.position, transform.position + Vector3.forward * detectDistance);
     }
 
     // 움직이는 방향에 맞는 애니메이션 설정
@@ -209,9 +164,60 @@ public class CloneController : MonoBehaviour
         anim.SetFloat("InputY", moveVec.y);
     }
 
+    // 주변에 있는 적들 중 가장 가까운 적을 찾는 코루틴
+    IEnumerator FindClosestEnemy()
+    {
+        while (gameObject.activeSelf)
+        {
+            if (nav.isStopped)
+            {
+                // 적 레이어에서 감지 거리 안에 있는 적 콜라이더들 가져오기
+                Collider[] hits = Physics.OverlapSphere(transform.position, detectDistance, GameManager.instance.enemyLayerMask);
+
+                // 가장 가까운 적 찾기
+                GameObject closestEnemy = null;
+                float minDistance = detectDistance + 1f; // 최소 거리는 감지 거리에 1 더한 것으로 초기화
+                foreach (Collider hit in hits)
+                {
+                    float distance = Vector3.Distance(transform.position, hit.transform.position); // 적과의 거리 계산
+                    if (distance < minDistance) // 적과의 거리가 최소 거리보다 작을 때
+                    {
+                        minDistance = distance; // 최소 거리 갱신
+                        closestEnemy = hit.gameObject; // 가장 가까운 적 설정
+                    }
+                }
+                Debug.Log("closestEnemy: " + closestEnemy);
+
+                if (closestEnemy != null) // 가장 가까운 적이 존재한다면
+                {
+                    // 1초마다 가장 가까운 적 공격
+                    Attack(closestEnemy);
+                    float curTime = 1.5f;
+                    while (curTime > 0)
+                    {
+                        curTime -= Time.deltaTime;
+                        yield return null;
+                    }
+                }
+                else // 존재하지 않는다면
+                {
+                    if (holdingWeapon != null) // 무기를 들고 있을 때
+                    {
+                        // 무기 넣기
+                        holdingWeapon.SetActive(false); // 들고 있는 무기 비활성화
+                        holdingWeapon = null; // 들고 있는 무기 초기화
+                    }
+                }
+            }
+
+            yield return null;
+        }
+    }
+
+    // 피해 함수
     public void Damage(int amount)
     {
-        if (curHp - amount < 0)
+        if (curHp - amount <= 0)
         {
             curHp = 0;
             Debug.Log("분신이 죽었습니다.");
@@ -223,24 +229,24 @@ public class CloneController : MonoBehaviour
         }
     }
 
+    // 공격 함수
     void Attack(GameObject enemy)
     {
         Debug.Log("분신이 적을 공격합니다.");
 
         PlayerController cloningAbilityCharacterController = cloningAbilityCharacter.GetComponent<PlayerController>();
 
-        // 총으로 공격 구현
+        // 무기로 공격
         for (int i = 0; i < 3; i++)
         {
             if (cloningAbilityCharacterController.equipWeapons[i] != null)
             {
                 int id = cloningAbilityCharacterController.equipWeapons[i].GetComponent<Weapon>().weaponId;
-                selectedWeapon = weapons[id];
-                selectedWeapon.SetActive(true);
+                holdingWeapon = weapons[id];
+                holdingWeapon.SetActive(true);
                 gameObject.transform.LookAt(enemy.transform);
 
-                Weapon weapon = selectedWeapon.GetComponent<Weapon>();
-                // Debug.Log("weapon.canFire: " + weapon.canFire);
+                Weapon weapon = holdingWeapon.GetComponent<Weapon>();
                 if (weapon.canFire)
                 {
                     anim.SetTrigger("Fire");
@@ -249,5 +255,11 @@ public class CloneController : MonoBehaviour
                 break;
             }
         }
+    }
+
+    // 분신을 해제할 때(분신이 비활성화 할 때) 실행되는 함수
+    void OnDisable()
+    {
+        nav.enabled = false; // 사용하지 않으므로 NavMeshAgent 비활성화
     }
 }

@@ -9,6 +9,11 @@ TagManager:
   - Enemy
   - Weapon
   - Bullet
+  - CanPhasing
+  - OuterWall
+  - CardReader
+  - Researcher
+  - NextStagePoint
   layers:
   - Default
   - TransparentFX

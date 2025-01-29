@@ -17,10 +17,12 @@ public class Weapon : MonoBehaviour
     public int weaponId;
     public float bulletSpeed;
     public float fireDistance;
-    int curBulletCnt;
+    public int curBulletCnt;
 
-    IEnumerator curCoroutine;
     public bool canFire;
+    public bool canFireBullet;
+    public bool weaponDirection;
+    public bool isFiring;
 
     void Start()
     {
@@ -34,21 +36,30 @@ public class Weapon : MonoBehaviour
         {
             if (canFire)
             {
-                // curCoroutine = Fire();
                 canFire = false;
                 StartCoroutine(Fire(user));
             }
         }
     }
 
+    void OnEnable()
+    {
+        gameObject.transform.localRotation = Quaternion.Euler(originalRotation);
+    }
+
     IEnumerator Fire(GameObject user)
     {
-        gameObject.transform.localRotation = Quaternion.Euler(fireRotation); // 총 각도 변경(발사 각도)
+        isFiring = true;
 
-        yield return new WaitForSeconds(0.3f);
+        while (!canFireBullet)
+        {
+            yield return null;
+        }
+        yield return new WaitForSeconds(0.1f);
 
         Ray ray;
-        if (user == GameManager.instance.characters[GameManager.instance.selectCharacterId])
+        int layerMask = layerMask = GameManager.instance.enemyLayerMask | GameManager.instance.mapLayerMask;
+        if (user == GameManager.instance.Characters[GameManager.instance.selectCharacterId])
         {
             Debug.Log("현재 플레이 중인 플레이어의 공격입니다.");
             ray = GameManager.instance.mainCamera.ScreenPointToRay(new Vector3(Screen.width / 2, Screen.height / 2)); // 카메라 중앙 방향 계산
@@ -56,19 +67,26 @@ public class Weapon : MonoBehaviour
         else
         {
             Debug.Log("현재 플레이 중이지 않은 적/클론/나머지 캐릭터의 공격입니다.");
-            Vector3 rayDirection = user.transform.forward;
-            ray = new Ray(bulletPos.position, rayDirection);
+            ray = new Ray(bulletPos.position, user.transform.forward);
+            if (user.tag == "Enemy")
+            {
+                layerMask = GameManager.instance.playerLayerMask | GameManager.instance.mapLayerMask;
+            }
         }
 
         Vector3 targetPoint;
-        if (Physics.Raycast(ray, out RaycastHit hit, 10f, GameManager.instance.enemyLayerMask | GameManager.instance.mapLayerMask))
+        if (Physics.Raycast(ray, out RaycastHit hit, 10f, layerMask))
         {
             targetPoint = hit.point; // 충돌 지점
-            // Debug.Log(hit.collider.gameObject.name + "와(과) 총알이 충돌했습니다.");
-            if (hit.collider.gameObject.tag == "Enemy")
+            if (user.tag != "Enemy" && hit.collider.gameObject.tag == "Enemy")
             {
                 hit.collider.gameObject.GetComponent<EnemyController>().Damage(damage);
                 Debug.Log("적이 총알에 맞았습니다!");
+            }
+            else if (user.tag == "Enemy" && (hit.collider.gameObject.tag == "Player" || hit.collider.gameObject.tag == "Clone"))
+            {
+                hit.collider.gameObject.GetComponent<PlayerController>().Damage(damage);
+                Debug.Log("플레이어가 총알에 맞았습니다!");
             }
         }
         else
@@ -78,6 +96,9 @@ public class Weapon : MonoBehaviour
 
         // 총알 시각적 효과 생성
         GameObject firedBullet = Instantiate(bullet, bulletPos.position, Quaternion.identity);
+
+        // // 총이 충돌 지점을 향하도록 회전 설정
+        // gameObject.transform.LookAt(targetPoint);
 
         // 총알이 충돌 지점을 향하도록 회전 설정
         firedBullet.transform.LookAt(targetPoint);
@@ -101,14 +122,10 @@ public class Weapon : MonoBehaviour
             firedBullet.transform.position = Vector3.MoveTowards(firedBullet.transform.position, targetPoint, bulletSpeed * Time.deltaTime);
             yield return null;
         }
+        curBulletCnt--;
 
-        // Debug.Log("*** " + gameObject.transform.root.GetChild(0).GetChild(0).GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Fire"));
-        // if (!gameObject.transform.root.GetChild(0).GetChild(0).GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("Fire"))
-        // {
-        //     gameObject.transform.localRotation = Quaternion.Euler(originalRotation); // 총 각도 원래대로 변경(들고 있는 각도)
-        // }
-
-        // curCoroutine = null;
         canFire = true;
+
+        isFiring = false;
     }
 }

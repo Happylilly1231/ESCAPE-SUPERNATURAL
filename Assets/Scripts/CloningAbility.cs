@@ -155,15 +155,15 @@ public class CloningAbility : MonoBehaviour, ISupernatural
             {
                 CloneController selectedCloneController = selectedClone.GetComponent<CloneController>();
 
-                if (!selectedCloneController.isFollow) // 선택된 분신이 따라오지 않고 있을 때
+                if (!selectedCloneController.IsFollow) // 선택된 분신이 따라오지 않고 있을 때
                 {
                     // 분신이 분신술 캐릭터를 따라오기
-                    selectedCloneController.isFollow = true;
+                    selectedCloneController.IsFollow = true;
                 }
                 else // 선택된 분신이 따라오고 있는 중일 때
                 {
                     // 분신이 분신술 캐릭터를 따라오지 않기
-                    selectedCloneController.isFollow = false;
+                    selectedCloneController.IsFollow = false;
                     selectedClone = null;
                 }
                 isSelectingToFollow = false;

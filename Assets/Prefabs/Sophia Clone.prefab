@@ -148,7 +148,7 @@ Transform:
   m_GameObject: {fileID: 8014952439770724144}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.038314, y: 16.921051, z: 13.406136}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -195,7 +195,9 @@ MonoBehaviour:
   characterId: 3
   weapons: []
   equipWeapons: []
+  supernaturalCoolDown: 0
   targetCharacter: {fileID: 0}
+  isWalking: 0
 --- !u!54 &6368577043729118314
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -265,7 +267,6 @@ MonoBehaviour:
   - {fileID: 5374703996818848730}
   - {fileID: 7734996401875301454}
   cloningAbilityCharacter: {fileID: 0}
-  isFollow: 0
 --- !u!195 &5198367782475840787
 NavMeshAgent:
   m_ObjectHideFlags: 0

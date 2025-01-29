@@ -7,118 +7,237 @@ using UnityEngine.UI;
 
 public class EnemyController : MonoBehaviour
 {
+    enum EnemyState { Idle, Patrol, Chase }
+    EnemyState currentState = EnemyState.Idle;
+
     public Animator anim;
     public BoxCollider collisionBox;
     public List<Transform> targets; // 타겟 = 플레이어들
     public Transform hpBarPos;
     public Canvas canvas;
+    public GameObject enemyWeapon;
+    public Transform[] patrolPoints; // 순찰 경로 포인트들
 
     NavMeshAgent nav;
     Vector2 moveVec;
     float fovAngle = 110f; // 시야각
-    bool playerInSight = false; // 플레이어가 시야 내에 있는지 여부
-    Vector3 originalPos;
-    Transform closeTarget;
-    Vector3 dirToCloseTarget;
     Vector3 targetPos;
     float sightDistance = 10f; // 시야 내에서 탐지할 수 있는 거리
     float detectDistance = 2.4f; // 시야 밖에서 탐지할 수 있는 거리
 
     int maxHp = 100;
     float curHp;
-    int damage = 10;
 
     public Slider hpBar;
     public TextMeshProUGUI hpTxt;
 
+    GameObject closestPlayer;
+    float stopDistance = 0.1f;
+
+    int currentPatrolIndex;
+
+    float idleTimer;
+    float idleDuration = 5f;
+    float attackTimer;
+
     void Awake()
     {
         nav = GetComponent<NavMeshAgent>();
-        originalPos = transform.position;
         curHp = maxHp;
     }
 
     void Start()
     {
         // hpBar = Instantiate(UIManager.instance.hpBarPrefab, canvas.transform);
-        StartCoroutine(TrackingTarget()); // 타겟 추적
+        transform.position = patrolPoints[0].position; // 처음 순찰 지점으로 위치 초기화
     }
 
     void Update()
     {
-        // 속력에 따라 Moving 상태 설정
-        if (nav.velocity.magnitude < 0.1f)
+        FindClosestPlayer(); // 주변에 있는 적들 중 가장 가까운 적을 찾기
+
+        switch (currentState) // 현재 상태가
         {
-            anim.SetBool("Moving", false);
-        }
-        else
-        {
-            anim.SetBool("Moving", true);
+            case EnemyState.Idle: // 가만히 있을 때(대기할 때)
+                Idle(); // 대기
+                break;
+            case EnemyState.Patrol: // 순찰 중일 때
+                Patrol(); // 순찰
+                break;
+            case EnemyState.Chase: // 추적 중일 때
+                Chase(); // 추적
+                break;
         }
 
-        // 체력바 위치 업데이트
-        // Vector3 screenPos = GameManager.instance.mainCamera.WorldToScreenPoint(hpBarPos.position);
-        // hpBar.transform.position = screenPos;
-        // Vector3 dirToCamera = GameManager.instance.mainCamera.transform.position - hpBar.transform.position;
-        // dirToCamera.y = 0;
-        // hpBar.transform.rotation = Quaternion.LookRotation(dirToCamera);
-        // Debug.Log(dirToCamera);
+        // 움직이는 방향에 맞는 애니메이션 설정
+        SetAnimMoveVec();
 
+        // 총 각도 변경
+        if (enemyWeapon != null) // 총이 선택되어있을 때(총을 들고 있을 때)
+        {
+            Weapon weapon = enemyWeapon.GetComponent<Weapon>();
+
+            bool isPlayingFireAnimation = anim.GetCurrentAnimatorStateInfo(0).IsName("Fire");
+            bool isDoingFireTranstion = anim.GetAnimatorTransitionInfo(0).IsName("Fire -> Idle") || anim.GetAnimatorTransitionInfo(0).IsName("Idle -> Fire");
+
+            if (!isDoingFireTranstion)
+            {
+                if (isPlayingFireAnimation)
+                {
+                    weapon.canFireBullet = true;
+                    enemyWeapon.transform.localRotation = Quaternion.Euler(weapon.fireRotation); // 총 각도 변경(발사 각도)
+                }
+                else
+                {
+                    weapon.canFireBullet = false;
+                    enemyWeapon.transform.localRotation = Quaternion.Euler(weapon.originalRotation);
+                }
+            }
+            else
+            {
+                weapon.canFireBullet = false;
+                enemyWeapon.transform.localRotation = Quaternion.Euler(weapon.originalRotation);
+            }
+        }
+
+        // // 거리에 따라 멈춤 설정
+        // if (!nav.pathPending && nav.remainingDistance < stopDistance)
+        // {
+        //     nav.isStopped = true;
+        //     anim.SetBool("Moving", false);
+        // }
+        // else
+        // {
+        //     nav.isStopped = false;
+        //     anim.SetBool("Moving", true);
+        // }
+
+        // 체력바 따라다니고 플레이어 화면 바라보게 하기
         canvas.transform.LookAt(canvas.transform.position + GameManager.instance.mainCamera.transform.rotation * Vector3.forward, GameManager.instance.mainCamera.transform.rotation * Vector3.up);
     }
 
-    IEnumerator TrackingTarget()
+    // 주변에 있는 적들 중 가장 가까운 적을 찾는 함수
+    void FindClosestPlayer()
     {
-        targetPos = originalPos;
-
-        while (true)
+        if (nav.isStopped)
         {
-            // 변수 초기화
-            closeTarget = null; // 가장 가까운 타겟
-            dirToCloseTarget = targets[0].position - transform.position; // 가장 가까운 타겟의 방향
+            // 플레이어 레이어에서 감지 거리 안에 있는 플레이어 콜라이더들 가져오기
+            Collider[] hits = Physics.OverlapSphere(transform.position, sightDistance, GameManager.instance.playerLayerMask);
 
-            // 추적 조건에 맞는 가장 가까운 타겟 탐색
-            foreach (Transform target in targets)
+            // 가장 가까운 플레이어 찾기
+            closestPlayer = null;
+            float minDistance = sightDistance + 1f; // 최소 거리는 감지 거리에 1 더한 것으로 초기화
+            foreach (Collider hit in hits)
             {
-                Vector3 dirToTarget = target.position - transform.position; // 타겟과 적 간의 방향 벡터 계산
+                Vector3 dirToTarget = hit.transform.position - transform.position; // 적과 플레이어 간의 방향 벡터 계산
 
                 float angleToTarget = Vector3.Angle(transform.forward, dirToTarget); // 앞을 바라보는 방향 벡터와 타겟과 적 간의 방향 벡터 사이의 각도 계산
 
-                // Debug.Log(target.name + " | " + (angleToTarget < fovAngle / 2f) + "," + (dirToTarget.magnitude <= sightDistance) + "," + (dirToTarget.magnitude <= detectDistance) + " , " + dirToTarget.magnitude);
-
                 if ((angleToTarget < fovAngle / 2f && dirToTarget.magnitude <= sightDistance) || dirToTarget.magnitude <= detectDistance) // 타겟이 추적 조건에 맞는지 비교(각도는 시야 각의 절반과 비교해야 함)
                 {
-                    if (dirToTarget.magnitude <= dirToCloseTarget.magnitude) // 더 가까운 타겟이면
+                    float distance = Vector3.Distance(transform.position, hit.transform.position); // 적과의 거리 계산
+                    if (distance < minDistance) // 적과의 거리가 최소 거리보다 작을 때
                     {
-                        closeTarget = target; // 가장 가까운 타겟 변경
-                        dirToCloseTarget = dirToTarget; // 가장 가까운 타겟의 방향 변경
+                        minDistance = distance; // 최소 거리 갱신
+                        closestPlayer = hit.gameObject; // 가장 가까운 적 설정
                     }
                 }
             }
+            Debug.Log("closestPlayer: " + closestPlayer);
 
-            // 적의 이동
-            if (closeTarget) // 추적할 타겟이 있으면
+            if (closestPlayer != null) // 가장 가까운 플레이어가 존재한다면
             {
-                // 타겟 추적
-                targetPos = closeTarget.position;
-                nav.SetDestination(targetPos);
+                currentState = EnemyState.Chase; // 추적 상태로 변경
+                stopDistance = 5f;
             }
-            else // 추적할 타겟이 없으면
+            // else
+            // {
+            //     currentState = EnemyState.Patrol; // 순찰 상태로 변경
+            //     stopDistance = 0.1f;
+            // }
+        }
+    }
+
+    // 가만히 있을 때(대기할 때) 함수
+    void Idle()
+    {
+        Debug.Log("적 Idle 상태입니다.");
+
+        idleTimer += Time.deltaTime;
+
+        // 멈춤
+        nav.isStopped = true;
+        anim.SetBool("Moving", false);
+
+        if (idleTimer >= idleDuration) // 10초 동안 대기 후 다시 순찰
+        {
+            idleTimer = 0f;
+            currentState = EnemyState.Patrol; // 순찰 상태로 변경
+            stopDistance = 0.1f;
+            SetNextPatrolPoint(); // 현재 순찰 지점으로 이동
+        }
+    }
+
+    // 현재 순찰 지점으로 이동 함수
+    void SetNextPatrolPoint()
+    {
+        if (patrolPoints.Length > 0)
+        {
+            // 멈춤 해제
+            nav.isStopped = false;
+            anim.SetBool("Moving", true);
+            currentPatrolIndex = (currentPatrolIndex + 1) % patrolPoints.Length; // 현재 순찰 지점 갱신
+            targetPos = patrolPoints[currentPatrolIndex].position;
+            nav.SetDestination(targetPos); // 현재 순찰 지점으로 이동
+        }
+    }
+
+    // 순찰 중 함수
+    void Patrol()
+    {
+        Debug.Log("적 Patrol 상태입니다.");
+
+        // 목표 지점에 도달했는지 확인
+        if (!nav.pathPending && nav.remainingDistance <= stopDistance) // 목표 지점 도달
+        {
+            currentState = EnemyState.Idle; // 다음 순찰 지점으로 이동하기 전 대기하기
+            stopDistance = 0.1f;
+        }
+    }
+
+    void Chase()
+    {
+        Debug.Log("적 Chase 상태입니다.");
+
+        // 추적 조건에 맞는 가장 가까운 플레이어 추적
+        if (closestPlayer)
+        {
+            targetPos = closestPlayer.transform.position;
+            nav.SetDestination(targetPos);
+
+            if (!nav.pathPending && nav.remainingDistance < stopDistance)
             {
-                // 목적지가 원래 위치가 아닌 경우에 한번만 원래 위치로 초기화
-                if (targetPos != originalPos)
+                nav.isStopped = true;
+                anim.SetBool("Moving", false);
+            }
+            else
+            {
+                nav.isStopped = false;
+                anim.SetBool("Moving", true);
+            }
+
+            attackTimer += Time.deltaTime;
+
+            if (nav.isStopped)
+            {
+                if (attackTimer >= 1.5f)
                 {
-                    // 원래 위치로 이동
-                    targetPos = originalPos;
-                    nav.SetDestination(targetPos);
+                    Debug.Log("~~~ " + closestPlayer);
+                    attackTimer = 0f;
+                    // 1초마다 가장 가까운 플레이어 공격
+                    Attack(closestPlayer);
                 }
             }
-            // 움직이는 방향에 맞는 애니메이션 설정
-            SetAnimMoveVec();
-
-            // Debug.Log(closeTarget);
-
-            yield return new WaitForSeconds(0.5f);
         }
     }
 
@@ -153,9 +272,10 @@ public class EnemyController : MonoBehaviour
         anim.SetFloat("InputY", moveVec.y);
     }
 
+    // 피해 함수
     public void Damage(int amount)
     {
-        if (curHp - amount < 0)
+        if (curHp - amount <= 0)
         {
             curHp = 0;
             hpBar.value = 0;
@@ -171,15 +291,18 @@ public class EnemyController : MonoBehaviour
         }
     }
 
-    void OnCollisionEnter(Collision collision)
-    {
-        Attack(collision.gameObject);
-    }
-
+    // 공격 함수
     void Attack(GameObject player)
     {
         Debug.Log("적이 플레이어를 공격합니다.");
-        player.GetComponent<PlayerController>().Damage(damage);
+
+        Weapon weapon = enemyWeapon.GetComponent<Weapon>();
+        if (weapon.canFire)
+        {
+            gameObject.transform.LookAt(player.transform);
+            anim.SetTrigger("Fire");
+            weapon.Use(gameObject);
+        }
     }
 }
 

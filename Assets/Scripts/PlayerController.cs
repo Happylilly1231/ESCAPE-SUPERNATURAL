@@ -38,7 +38,6 @@ public class PlayerController : MonoBehaviour
 {
     public Animator anim;
     public CapsuleCollider col; //CHARACTER COLLIDER WITH DEFAULT VALUES (DEFAULT = STAND UP)
-    public int mapLayer = 7;
     public float jumpForce = 5f;
     public Transform bottomTransform;
     public GameObject interactionUI; // 상호작용 UI
@@ -71,9 +70,12 @@ public class PlayerController : MonoBehaviour
 
     // 무기
     public GameObject[] weapons; // 무기 배열
-    public GameObject[] equipWeapons; // 장착 무기 배열(주무기 : 1, 2 / 보조무기 : 3)
+    public GameObject[] equipWeapons; // 장착 무기 배열(주무기 : 0, 1 / 보조무기 : 2) ###저장 필요###
 
     public float supernaturalCoolDown; // 초능력 쿨타임 (초 단위)
+
+    public GameObject characterCamera; // 캐릭터 카메라
+
     bool isSupernaturalReady = true; // 초능력 사용 가능 여부
 
     Rigidbody rigid;
@@ -82,12 +84,6 @@ public class PlayerController : MonoBehaviour
     float inputZ;
     bool isGrounded;
     float movementInputSpeed = 6f;
-    Animator interactionAnim; // 상호작용하는 물체의 애니메이터
-    LayerMask interactiveLayerMask; // 상호작용 가능한 오브젝트 레이어 마스크
-    bool interactive; // 상호작용 가능 여부
-    // bool interact; // 상호작용 여부
-    bool openingDoor;
-    float currentSpeed;
 
     // 기본 Collider 정보
     Vector3 defaultColCenter;
@@ -114,17 +110,19 @@ public class PlayerController : MonoBehaviour
 
     bool isAiming;
 
-    bool isCheckingFireAnimationEnd;
-
     float cooldownRemainTime;
 
     bool canUIUpdate;
+
+    bool haveCorrectKeyCard;
+    public bool[] havingKeyCardLevel; // 카드키 레밸에 따른 소유 여부 ###저장 필요###
+
+    public bool isWalking;
 
     void Awake()
     {
         rigid = GetComponent<Rigidbody>();
         inputs = new InputSent();
-        interactiveLayerMask = LayerMask.GetMask("InteractiveObject"); // 상호작용 가능한 오브젝트 레이어 마스크 초기화
 
         defaultColCenter = col.center;
         defaultColHeight = col.height;
@@ -136,6 +134,8 @@ public class PlayerController : MonoBehaviour
         nav = GetComponent<NavMeshAgent>();
 
         CurHp = MaxHp;
+
+        havingKeyCardLevel = new bool[4];
     }
 
     void Start()
@@ -143,6 +143,31 @@ public class PlayerController : MonoBehaviour
         // 커서를 숨기고 화면 중앙에 고정
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        GameManager.instance.Characters[characterId] = gameObject; // 게임 매니저의 캐릭터 배열에 자신 할당
+        GameManager.instance.CharacterCameras[characterId] = characterCamera; // 게임 매니저의 캐릭터 카메라 배열에 자신 할당
+        if (characterId == GameManager.instance.selectCharacterId)
+        {
+            characterCamera.SetActive(true);
+            GameManager.instance.mainCamera = characterCamera.GetComponent<Camera>();
+        }
+        else
+        {
+            characterCamera.SetActive(false);
+        }
+
+        // 이전 스테이지에서 들고 온 장착 무기가 있으면 장착
+        for (int i = 0; i < 3; i++)
+        {
+            if (DataManager.instance.data.characterEquipWeapons.Count > 0)
+            {
+                equipWeapons[i] = DataManager.instance.data.characterEquipWeapons[characterId][i];
+                if (equipWeapons[i] != null)
+                {
+                    equipWeapons[i].GetComponent<Weapon>().curBulletCnt = DataManager.instance.data.characterEquipWeaponCurBulletCnts[characterId][i];
+                }
+            }
+        }
     }
 
     void Update()
@@ -268,6 +293,7 @@ public class PlayerController : MonoBehaviour
         inputs.sprint = Input.GetKey(KeyCode.LeftShift); // 빠르게 달리기
         inputs.jump = Input.GetKeyDown(KeyCode.Space); // 점프
         inputs.crouch = Input.GetKey(KeyCode.C); // 웅크려 앉기
+        isWalking = inputs.walk;
         inputs.interact = Input.GetKeyDown(KeyCode.F); // 상호작용
         inputs.fire = Input.GetMouseButtonDown(0); // 공격
         inputs.aim = Input.GetMouseButtonDown(1); // 조준
@@ -453,17 +479,42 @@ public class PlayerController : MonoBehaviour
             moveSpeed = currentSpeed;
         }
 
-        // 점프 애니메이션 적용
-        if (inputs.jump && isGrounded)
+        // 점프
+        if (inputs.jump && isGrounded && rigid.useGravity)
         {
             Debug.Log("점프!");
-            anim.SetBool("Jump", true);
+            anim.SetTrigger("Jump");
+            rigid.AddForce(Vector3.up * jumpForce, ForceMode.Impulse); // 점프
+            CheckGround(); // 땅에서 떨어졌으므로 체크
+                           // anim.SetBool("Jump", false); // 점프 변수 false로 다시 초기화
         }
 
         // 총을 들고 있을 때
         if (isHoldingWeapon)
         {
             Weapon weapon = equipWeapons[selectWeaponId].GetComponent<Weapon>();
+
+            // 총 각도 변경
+            bool isPlayingFireAnimation = anim.GetCurrentAnimatorStateInfo(0).IsName("Fire");
+            bool isDoingFireTranstion = anim.GetAnimatorTransitionInfo(0).IsName("Fire -> Idle") || anim.GetAnimatorTransitionInfo(0).IsName("Idle -> Fire");
+            if (!isDoingFireTranstion)
+            {
+                if (isPlayingFireAnimation)
+                {
+                    weapon.canFireBullet = true;
+                    equipWeapons[selectWeaponId].transform.localRotation = Quaternion.Euler(weapon.fireRotation); // 총 각도 변경(발사 각도)
+                }
+                else
+                {
+                    weapon.canFireBullet = false;
+                    equipWeapons[selectWeaponId].transform.localRotation = Quaternion.Euler(weapon.originalRotation);
+                }
+            }
+            else
+            {
+                weapon.canFireBullet = false;
+                equipWeapons[selectWeaponId].transform.localRotation = Quaternion.Euler(weapon.originalRotation);
+            }
 
             // 총 쏘기
             if (inputs.fire)
@@ -473,12 +524,8 @@ public class PlayerController : MonoBehaviour
                 {
                     anim.SetTrigger("Fire");
                     weapon.Use(gameObject);
-                    isCheckingFireAnimationEnd = true;
                 }
             }
-
-            // 총 각도 원래대로 변경
-            SetWeaponToOrignalRotation(weapon);
 
             // 조준하기
             if (inputs.aim)
@@ -497,20 +544,6 @@ public class PlayerController : MonoBehaviour
                     Debug.Log("조준 해제");
                     // GameManager.instance.mainCamera.transform.position -= transform.forward * 1f;
                 }
-            }
-        }
-    }
-
-    // 총 각도 원래대로 변경하는 함수
-    void SetWeaponToOrignalRotation(Weapon weapon)
-    {
-        // 총 각도 원래대로 변경
-        if (isCheckingFireAnimationEnd && weapon.canFire)
-        {
-            if (!anim.GetCurrentAnimatorStateInfo(0).IsName("Fire"))
-            {
-                equipWeapons[selectWeaponId].transform.localRotation = Quaternion.Euler(weapon.originalRotation); // 총 각도 원래대로 변경(들고 있는 각도)
-                isCheckingFireAnimationEnd = false;
             }
         }
     }
@@ -561,13 +594,13 @@ public class PlayerController : MonoBehaviour
             Quaternion deltaRotation = Quaternion.Euler(rotation);
             rigid.MoveRotation(rigid.rotation * deltaRotation);
 
-            // 점프
-            if (anim.GetBool("Jump"))
-            {
-                rigid.AddForce(Vector3.up * jumpForce, ForceMode.Impulse); // 점프
-                CheckGround(); // 땅에서 떨어졌으므로 체크
-                anim.SetBool("Jump", false); // 점프 변수 false로 다시 초기화
-            }
+            // // 점프
+            // if (anim.GetBool("Jump"))
+            // {
+            //     rigid.AddForce(Vector3.up * jumpForce, ForceMode.Impulse); // 점프
+            //     CheckGround(); // 땅에서 떨어졌으므로 체크
+            //     anim.SetBool("Jump", false); // 점프 변수 false로 다시 초기화
+            // }
 
             // 상호작용 가능한 물체가 범위 내에 있는지 체크
             // CheckCanInteraction();
@@ -599,6 +632,42 @@ public class PlayerController : MonoBehaviour
             if (nearObj.tag == "Weapon") // 무기
             {
                 Equip(nearObj); // 무기 장착
+            }
+            else if (nearObj.tag == "CardReader")
+            {
+                CardReader cardReader = nearObj.GetComponent<CardReader>();
+
+                // 카드키 갖고 있는지 체크
+                CheckHaveCorrectKeyCard(cardReader);
+
+                if (haveCorrectKeyCard)
+                {
+                    haveCorrectKeyCard = false;
+                    cardReader.OpenDoor(); // 해당 문 열기
+                }
+            }
+            else if (nearObj.tag == "Researcher")
+            {
+                ResearcherController researcherController = nearObj.GetComponent<ResearcherController>();
+                if (researcherController.havingKeyCard)
+                {
+                    researcherController.StealKeyCard(gameObject);
+                    havingKeyCardLevel[researcherController.keyCardLevel] = true;
+                }
+            }
+        }
+    }
+
+    // 카드키 갖고 있는지 체크 함수
+    void CheckHaveCorrectKeyCard(CardReader cardReader)
+    {
+        Debug.Log("카드키 갖고 있는지 체크");
+        for (int i = 0; i < 3; i++)
+        {
+            if (havingKeyCardLevel[i] && i <= cardReader.keyCardLevel)
+            {
+                haveCorrectKeyCard = true;
+                break;
             }
         }
     }
@@ -640,7 +709,6 @@ public class PlayerController : MonoBehaviour
         {
             if (curWeaponId != -1) // 현재 선택한 무기가 있는 경우
             {
-                // equipWeapons[curWeaponId].transform.localRotation = Quaternion.Euler(equipWeapons[curWeaponId].GetComponent<Weapon>().originalRotation); // 총 각도 원래대로 변경(들고 있는 각도)
                 equipWeapons[curWeaponId].SetActive(false); // 그 무기 선택 해제(비활성화)
                 curWeaponId = -1; // 현재 선택된 무기 없음
                 isHoldingWeapon = false; // 현재 무기 들고 있지 않음
@@ -652,14 +720,12 @@ public class PlayerController : MonoBehaviour
                 curWeaponId = selectWeaponId; // 현재 선택된 무기 변경
 
                 isHoldingWeapon = true; // 현재 총 들고 있음
-                // equipWeapons[curWeaponId].transform.localRotation = Quaternion.Euler(equipWeapons[curWeaponId].GetComponent<Weapon>().fireRotation); // 총 각도 변경(발사 각도)
             }
         }
         else // 무기 선택 해제 경우
         {
             if (curWeaponId != -1) // 현재 선택한 무기가 있는 경우
             {
-                // equipWeapons[curWeaponId].transform.localRotation = Quaternion.Euler(equipWeapons[curWeaponId].GetComponent<Weapon>().originalRotation); // 총 각도 원래대로 변경(들고 있는 각도)
                 equipWeapons[curWeaponId].SetActive(false); // 그 무기 선택 해제(비활성화)
                 curWeaponId = -1; // 현재 선택된 무기 없음
                 isHoldingWeapon = false; // 현재 무기 들고 있지 않음
@@ -708,13 +774,13 @@ public class PlayerController : MonoBehaviour
     //     }
     // }
 
-    // 문을 연 후 2초 뒤에 문을 닫는 코루틴
-    private IEnumerator CloseDoorCoroutine()
-    {
-        yield return new WaitForSeconds(2f); // 2초 대기
-        interactionAnim.SetBool("open", false);  // 문 닫기
-        openingDoor = false;
-    }
+    // // 문을 연 후 2초 뒤에 문을 닫는 코루틴
+    // private IEnumerator CloseDoorCoroutine()
+    // {
+    //     yield return new WaitForSeconds(2f); // 2초 대기
+    //     interactionAnim.SetBool("open", false);  // 문 닫기
+    //     openingDoor = false;
+    // }
 
     // 웅크려 앉았던 상태에서 천장에 닿지 않고 일어날 수 있는지 여부 체크
     bool IsCeilingAbove()
@@ -736,7 +802,7 @@ public class PlayerController : MonoBehaviour
     {
         if (collider.transform.parent != null)
         {
-            return collider.transform.parent.gameObject.layer == mapLayer;
+            return collider.transform.parent.gameObject.layer == GameManager.instance.mapLayerMask;
         }
         return false;
     }
@@ -756,11 +822,19 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    void OnTriggerStay(Collider other)
+    void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "Weapon")
+        if (other.tag == "Weapon" || other.tag == "CardReader" || other.tag == "Researcher")
         {
             nearObj = other.gameObject;
+        }
+        else if (other.tag == "NextStagePoint") // 다음 층 포인트를 밟으면
+        {
+            // 스테이지 클리어
+            Debug.Log(gameObject.name + "이(가) 스테이지를 클리어했습니다!");
+            GameManager.instance.CharacterClear(characterId);
+
+            gameObject.SetActive(false);
         }
 
         Debug.Log(nearObj);
@@ -768,7 +842,7 @@ public class PlayerController : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        if (other.tag == "Weapon")
+        if (other.tag == "Weapon" || other.tag == "CardReader" || other.tag == "Researcher")
         {
             nearObj = null;
         }
@@ -776,12 +850,13 @@ public class PlayerController : MonoBehaviour
 
     public void Damage(int amount)
     {
-        if (CurHp - amount < 0)
+        if (CurHp - amount <= 0)
         {
             CurHp = 0;
             UIManager.instance.SetHpBar(0);
             Debug.Log(gameObject.name + "이(가) 죽었습니다.");
-            Destroy(gameObject);
+            // Destroy(gameObject);
+            GameManager.instance.GameOver(); // 죽었으니 게임 오버
         }
         else
         {

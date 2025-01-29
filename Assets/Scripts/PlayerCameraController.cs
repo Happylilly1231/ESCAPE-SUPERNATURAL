@@ -145,7 +145,7 @@ public class PlayerCameraController : MonoBehaviour
             if (hit.transform.parent != null)
             {
                 //ONLY USE COLLIDERS THAT ARE CHILDREN OF collisionsRoot TRANSFORM
-                if (hit.transform.parent.gameObject.layer == playerController.mapLayer)
+                if (hit.transform.parent.gameObject.layer == GameManager.instance.mapLayerMask)
                 {
                     //CHECK CLOSEST WALL TO CHARACTER IF MULTIPLE WALLS DETECTED
                     if (closestHit == null || hit.distance < closestHit.Value.distance)

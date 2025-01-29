@@ -32,6 +32,9 @@ public class UIManager : MonoBehaviour
     public Image duraitonDisableImg; // 초능력 남은 지속시간 이미지
     public TextMeshProUGUI durationRemainTimeText; // 초능력 남은 지속시간 텍스트
 
+    public Button[] characterSelectBtn; // 캐릭터 선택 버튼 배열
+    public Button[] cloneCntBtn; // 분신 수 선택 버튼 배열
+
     void Awake()
     {
         if (instance == null)
@@ -41,6 +44,21 @@ public class UIManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+        }
+    }
+
+    void Start()
+    {
+        PlayingCharacterSetting(GameManager.instance.selectCharacterId);
+
+        for (int i = 0; i < 3; i++)
+        {
+            int id = i; // for문으로 람다식을 쓸 때는 마지막 값으로만 초기화되는 Closure 문제 때문에 변수를 복사해서 사용
+
+            characterSelectBtn[id].onClick.AddListener(() => GameManager.instance.SelectCharacter(id));
+
+            GameObject cloningAbilityCharacter = GameManager.instance.Characters[1];
+            cloneCntBtn[id].onClick.AddListener(() => cloningAbilityCharacter.GetComponent<CloningAbility>().SelectCloneCount(id + 1));
         }
     }
 
@@ -119,7 +137,7 @@ public class UIManager : MonoBehaviour
     // 캐릭터 변경했을 때 기본 UI 설정 함수
     public void PlayingCharacterSetting(int selectCharacterId)
     {
-        PlayerController playerController = GameManager.instance.characters[selectCharacterId].GetComponent<PlayerController>();
+        PlayerController playerController = GameManager.instance.Characters[selectCharacterId].GetComponent<PlayerController>();
 
         // 따라오기 선택 캐릭터 버튼 변경
         ResetFollowCharacterBtn(selectCharacterId);
@@ -145,7 +163,6 @@ public class UIManager : MonoBehaviour
         // 초능력 지속시간 이미지 바꾸기 코드 추가
         duraitonDisableImg.fillAmount = 0;
         durationRemainTimeText.text = "";
-        Debug.Log("---" + cooldownRemainTimeText.text);
     }
 
     public void SetHpBar(float value)

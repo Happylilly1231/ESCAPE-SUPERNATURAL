@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 // 물질통과 초능력
@@ -20,6 +21,15 @@ public class PhasingAbility : MonoBehaviour, ISupernatural
     public void Activate()
     {
         StartCoroutine(Phasing()); // 물질 통과 코루틴 실행
+    }
+
+    void Update()
+    {
+        // T키 -> 소리 내서 적 유인하기
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            Debug.Log("소리 내서 적 유인하기 시작");
+        }
     }
 
     public void Deactivate()
@@ -51,11 +61,42 @@ public class PhasingAbility : MonoBehaviour, ISupernatural
             yield return null;
         }
         if (canUIUpdate)
+        {
             UIManager.instance.durationRemainTimeText.text = "";
+            UIManager.instance.durationImg.color = Color.white;
+        }
 
         // yield return new WaitForSeconds(duration); // 2초 동안 지속
 
         rigid.useGravity = true; // 중력 다시 활성화
         col.isTrigger = false; // 다시 원래대로 돌아오기
     }
+
+    void OnTriggerEnter(Collider other)
+    {
+        // if (other.gameObject.tag != "CanPhasing" && other.gameObject.tag != "Weapon" && other.gameObject.tag != "Floor")
+        // {
+        //     Debug.Log("OnTriggerEnter " + other.gameObject.name);
+        //     col.isTrigger = false;
+        // }
+
+        if (other.gameObject.tag == "OuterWall")
+        {
+            Debug.Log("OnTriggerEnter : " + other.gameObject.tag);
+            col.isTrigger = false;
+            if (canUIUpdate)
+                UIManager.instance.durationImg.color = Color.red;
+        }
+    }
+
+    // void OnTriggerExit(Collider other)
+    // {
+    //     if (other.gameObject.tag == "OuterWall")
+    //     {
+    //         Debug.Log("OnTriggerExit : " + other.gameObject.tag);
+    //         col.isTrigger = true;
+    //         if (canUIUpdate)
+    //             UIManager.instance.cooldownImg.color = Color.white;
+    //     }
+    // }
 }
