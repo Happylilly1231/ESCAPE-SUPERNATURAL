@@ -131,6 +131,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   type: 2
   id: 2
+  curBulletCnt: 30
 --- !u!135 &6509989193659513380
 SphereCollider:
   m_ObjectHideFlags: 0

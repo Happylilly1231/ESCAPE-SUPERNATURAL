@@ -14,6 +14,8 @@ TagManager:
   - CardReader
   - Researcher
   - NextStagePoint
+  - Machine
+  - CanPassTeleport
   layers:
   - Default
   - TransparentFX
@@ -25,7 +27,7 @@ TagManager:
   - Map
   - Player
   - Enemy
-  - 
+  - InvisibleMap
   - 
   - 
   - 

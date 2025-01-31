@@ -569,11 +569,15 @@ MonoBehaviour:
   bulletPos: {fileID: 3730488880915706767}
   fireRotation: {x: -60, y: 50, z: -80}
   originalRotation: {x: 0, y: 0, z: 0}
-  maxBulletCnt: 7
+  maxBulletCnt: 10
   weaponId: 1
   bulletSpeed: 40
   fireDistance: 5
+  curBulletCnt: 0
   canFire: 0
+  canFireBullet: 0
+  weaponDirection: 0
+  isFiring: 0
 --- !u!1 &2889757421994685918
 GameObject:
   m_ObjectHideFlags: 0

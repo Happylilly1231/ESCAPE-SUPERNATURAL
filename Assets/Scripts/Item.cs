@@ -14,4 +14,5 @@ public class Item : MonoBehaviour
 
     public Type type;
     public int id;
+    public int curBulletCnt;
 }

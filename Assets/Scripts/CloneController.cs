@@ -262,4 +262,26 @@ public class CloneController : MonoBehaviour
     {
         nav.enabled = false; // 사용하지 않으므로 NavMeshAgent 비활성화
     }
+
+    void OnTriggerStay(Collider other)
+    {
+        if (other.tag == "Machine")
+        {
+            if (other.GetComponent<DocumentCollectObject>().interactiveCharacterId == 1)
+            {
+                other.GetComponent<DocumentCollectObject>().isExists[1] = true;
+            }
+        }
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        if (other.tag == "Machine")
+        {
+            if (other.GetComponent<DocumentCollectObject>().interactiveCharacterId == 1)
+            {
+                other.GetComponent<DocumentCollectObject>().isExists[1] = false;
+            }
+        }
+    }
 }

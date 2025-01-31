@@ -54,6 +54,15 @@ public class PlayerCameraController : MonoBehaviour
 
     }
 
+    void Start()
+    {
+        if (GameManager.instance.selectCharacterId != playerController.characterId)
+        {
+            Debug.Log("%%% " + playerController.characterId);
+            scrollInput = 0f;
+        }
+    }
+
     ///DETECT PLAYER INPUTS AND MOVE CAMERA
     void Update()
     {

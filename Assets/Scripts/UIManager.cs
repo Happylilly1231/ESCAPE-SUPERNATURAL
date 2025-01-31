@@ -71,13 +71,13 @@ public class UIManager : MonoBehaviour
 
             if (Cursor.lockState == CursorLockMode.Locked)
             {
-                GameManager.instance.Pause();
+                // GameManager.instance.Pause();
                 Cursor.lockState = CursorLockMode.None; // 커서 해제
                 Cursor.visible = true; // 커서 보이기
             }
             else
             {
-                GameManager.instance.Continue();
+                // GameManager.instance.Continue();
                 Cursor.lockState = CursorLockMode.Locked; // 커서 고정
                 Cursor.visible = false; // 커서 숨기기
             }

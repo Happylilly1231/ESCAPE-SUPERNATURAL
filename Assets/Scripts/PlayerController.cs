@@ -99,7 +99,7 @@ public class PlayerController : MonoBehaviour
 
     bool isPlayingCharacter;
 
-    NavMeshAgent nav;
+    public NavMeshAgent nav;
     public Transform targetCharacter = null;
 
     int maxHp = 100;
@@ -323,11 +323,16 @@ public class PlayerController : MonoBehaviour
             if (curWeaponId != -1)
             {
                 equipWeapons[curWeaponId].SetActive(false);
-                int id = equipWeapons[curWeaponId].GetComponent<Weapon>().weaponId;
-                Instantiate(GameManager.instance.weaponItems[id], transform.position + transform.forward * 2f, Quaternion.identity);
+                Weapon weapon = equipWeapons[curWeaponId].GetComponent<Weapon>();
+                int id = weapon.weaponId;
+                GameObject weaponItem = GameManager.instance.weaponItems[id];
+                GameObject throwWeaponItem = Instantiate(weaponItem, transform.position + transform.forward * 2f, Quaternion.identity);
+                throwWeaponItem.GetComponent<Item>().curBulletCnt = weapon.curBulletCnt;
                 equipWeapons[curWeaponId] = null;
                 UIManager.instance.ChangeWeaponImg(curWeaponId, -1);
                 curWeaponId = -1;
+                selectWeaponId = -1;
+                isHoldingWeapon = false;
             }
         }
 
@@ -655,6 +660,14 @@ public class PlayerController : MonoBehaviour
                     havingKeyCardLevel[researcherController.keyCardLevel] = true;
                 }
             }
+            else if (nearObj.tag == "Machine")
+            {
+                DocumentCollectObject documentCollectObject = nearObj.GetComponent<DocumentCollectObject>();
+                if (documentCollectObject.interactiveCharacterId == characterId || documentCollectObject.interactiveCharacterId == -1)
+                {
+                    documentCollectObject.Activate();
+                }
+            }
         }
     }
 
@@ -693,6 +706,7 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log("무기 장착 완료!");
             equipWeapons[equipId] = weapons[weaponId];
+            equipWeapons[equipId].GetComponent<Weapon>().curBulletCnt = item.curBulletCnt;
             UIManager.instance.ChangeWeaponImg(equipId, weaponId);
             Destroy(weaponObj); // 입수한 무기 아이템 파괴
         }
@@ -718,7 +732,6 @@ public class PlayerController : MonoBehaviour
             {
                 equipWeapons[selectWeaponId].SetActive(true); // 그 무기 선택(활성화)
                 curWeaponId = selectWeaponId; // 현재 선택된 무기 변경
-
                 isHoldingWeapon = true; // 현재 총 들고 있음
             }
         }
@@ -824,11 +837,7 @@ public class PlayerController : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "Weapon" || other.tag == "CardReader" || other.tag == "Researcher")
-        {
-            nearObj = other.gameObject;
-        }
-        else if (other.tag == "NextStagePoint") // 다음 층 포인트를 밟으면
+        if (other.tag == "NextStagePoint") // 다음 층 포인트를 밟으면
         {
             // 스테이지 클리어
             Debug.Log(gameObject.name + "이(가) 스테이지를 클리어했습니다!");
@@ -836,15 +845,31 @@ public class PlayerController : MonoBehaviour
 
             gameObject.SetActive(false);
         }
+    }
+
+    void OnTriggerStay(Collider other)
+    {
+        if (other.tag == "Weapon" || other.tag == "CardReader" || other.tag == "Researcher" || other.tag == "Machine")
+        {
+            nearObj = other.gameObject;
+            if (other.tag == "Machine")
+            {
+                other.gameObject.GetComponent<DocumentCollectObject>().isExists[characterId] = true;
+            }
+        }
 
         Debug.Log(nearObj);
     }
 
     void OnTriggerExit(Collider other)
     {
-        if (other.tag == "Weapon" || other.tag == "CardReader" || other.tag == "Researcher")
+        if (other.tag == "Weapon" || other.tag == "CardReader" || other.tag == "Researcher" || other.tag == "Machine")
         {
             nearObj = null;
+            if (other.tag == "Machine")
+            {
+                other.gameObject.GetComponent<DocumentCollectObject>().isExists[characterId] = false;
+            }
         }
     }
 

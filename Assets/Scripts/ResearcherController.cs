@@ -10,7 +10,8 @@ public class ResearcherController : MonoBehaviour
 
     public Animator anim;
     public List<Transform> targets; // 타겟 = 플레이어들
-    public Transform[] patrolPoints; // 순찰 경로 포인트들
+    public GameObject researcherPatrolPoints; // 순찰 경로 포인트 저장된 오브젝트
+    Transform[] patrolPoints; // 순찰 경로 포인트들
     public int keyCardLevel;
     public bool havingKeyCard;
 
@@ -41,6 +42,7 @@ public class ResearcherController : MonoBehaviour
 
     void Start()
     {
+        patrolPoints = researcherPatrolPoints.GetComponent<ShowPatrolPath>().patrolPoints; // 순찰 지점 배열 가져오기
         transform.position = patrolPoints[0].position; // 처음 순찰 지점으로 위치 초기화
     }
 

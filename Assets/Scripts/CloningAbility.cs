@@ -44,7 +44,19 @@ public class CloningAbility : MonoBehaviour, ISupernatural
         // 분신 이동 제어 코루틴 실행
         StartCoroutine(ControlCloneMove());
 
-        duration = 30f / cloneCnt; // 지속 시간 -> 1명 : 15초 / 2명 : 10초 / 3명 : 5초
+        // 지속 시간 -> 1명 : 40초 / 2명 : 30초 / 3명 : 20초
+        switch (cloneCnt)
+        {
+            case 1:
+                duration = 40f;
+                break;
+            case 2:
+                duration = 30f;
+                break;
+            case 3:
+                duration = 20f;
+                break;
+        }
 
         // 지속시간만큼 지속
         durationRemainTime = duration;
@@ -63,8 +75,6 @@ public class CloningAbility : MonoBehaviour, ISupernatural
         }
         if (CanUIUpdate)
             UIManager.instance.durationRemainTimeText.text = "";
-
-        // yield return new WaitForSeconds(duration); // 지속 시간만큼 지속
 
         // 활성화했던 분신 비활성화
         for (int i = 0; i < cloneCnt; i++)

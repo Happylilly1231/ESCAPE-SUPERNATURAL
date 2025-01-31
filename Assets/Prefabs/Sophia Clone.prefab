@@ -127,10 +127,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5322312922021010401}
-  - component: {fileID: 7326758854344760681}
+  - component: {fileID: 8543579694626291064}
   - component: {fileID: 6368577043729118314}
   - component: {fileID: 5335616622074308273}
-  - component: {fileID: 8543579694626291064}
   - component: {fileID: 5198367782475840787}
   m_Layer: 8
   m_Name: Sophia Clone
@@ -148,56 +147,33 @@ Transform:
   m_GameObject: {fileID: 8014952439770724144}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: 0.15, z: 0}
+  m_LocalScale: {x: 1.4, y: 1.4, z: 1.4}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2511618372118824320}
   - {fileID: 1842275773170388324}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7326758854344760681
+--- !u!114 &8543579694626291064
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8014952439770724144}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 54a3016503c21024eaee8715c8af25af, type: 3}
+  m_Script: {fileID: 11500000, guid: 3bb4c325c5315dc4d835b697b4f51a35, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   anim: {fileID: 8375326752959963130}
-  col: {fileID: 5335616622074308273}
-  mapLayer: 7
-  jumpForce: 5
-  bottomTransform: {fileID: 2110743956454083499}
-  interactionUI: {fileID: 0}
-  interactionRange: 2.5
-  moveSpeed: 4.4
-  runSpeed: 4.4
-  walkSpeed: 2
-  crouchSpeed: 2
-  sprintSpeed: 7.5
-  turnSpeed: 150
-  walkLayer: 1
-  walkLayerWeight: 0
-  walkTransitionSpeed: 10
-  sprintLayer: 2
-  sprintLayerWeight: 0
-  sprintTransitionSpeed: 6
-  crouchLayer: 3
-  crouchLayerWeight: 0
-  crouchTransitionSpeed: 10
-  crouchColCenter: {x: 0, y: 0.6, z: 0.2}
-  crouchColHeight: 1.2
-  characterId: 3
-  weapons: []
-  equipWeapons: []
-  supernaturalCoolDown: 0
-  targetCharacter: {fileID: 0}
-  isWalking: 0
+  weapons:
+  - {fileID: 6566846466090389612}
+  - {fileID: 5034397340875777866}
+  - {fileID: 5374703996818848730}
+  - {fileID: 7734996401875301454}
+  cloningAbilityCharacter: {fileID: 0}
 --- !u!54 &6368577043729118314
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -248,25 +224,6 @@ CapsuleCollider:
   m_Height: 1.8
   m_Direction: 1
   m_Center: {x: 0, y: 0.9, z: 0}
---- !u!114 &8543579694626291064
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8014952439770724144}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3bb4c325c5315dc4d835b697b4f51a35, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  anim: {fileID: 8375326752959963130}
-  weapons:
-  - {fileID: 6566846466090389612}
-  - {fileID: 5034397340875777866}
-  - {fileID: 5374703996818848730}
-  - {fileID: 7734996401875301454}
-  cloningAbilityCharacter: {fileID: 0}
 --- !u!195 &5198367782475840787
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -452,12 +409,6 @@ PrefabInstance:
       addedObject: {fileID: 4762372253512150447}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 98e3d543e4c80954fba8bf460668c87f, type: 3}
---- !u!4 &2110743956454083499 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4294017777283377397, guid: 98e3d543e4c80954fba8bf460668c87f,
-    type: 3}
-  m_PrefabInstance: {fileID: 2800592571520230238}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2511618372118824320 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 290125389734569694, guid: 98e3d543e4c80954fba8bf460668c87f,

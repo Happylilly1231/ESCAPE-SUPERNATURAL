@@ -11,12 +11,13 @@ public class EnemyController : MonoBehaviour
     EnemyState currentState = EnemyState.Idle;
 
     public Animator anim;
-    public BoxCollider collisionBox;
+    public CapsuleCollider col;
     public List<Transform> targets; // 타겟 = 플레이어들
     public Transform hpBarPos;
     public Canvas canvas;
     public GameObject enemyWeapon;
-    public Transform[] patrolPoints; // 순찰 경로 포인트들
+    public GameObject enemyPatrolPoints; // 순찰 경로 포인트 저장된 오브젝트
+    Transform[] patrolPoints; // 순찰 경로 포인트들
 
     NavMeshAgent nav;
     Vector2 moveVec;
@@ -49,6 +50,7 @@ public class EnemyController : MonoBehaviour
     void Start()
     {
         // hpBar = Instantiate(UIManager.instance.hpBarPrefab, canvas.transform);
+        patrolPoints = enemyPatrolPoints.GetComponent<ShowPatrolPath>().patrolPoints; // 순찰 지점 배열 가져오기
         transform.position = patrolPoints[0].position; // 처음 순찰 지점으로 위치 초기화
     }
 
@@ -119,42 +121,51 @@ public class EnemyController : MonoBehaviour
     // 주변에 있는 적들 중 가장 가까운 적을 찾는 함수
     void FindClosestPlayer()
     {
-        if (nav.isStopped)
+        // 플레이어 레이어에서 감지 거리 안에 있는 플레이어 콜라이더들 가져오기
+        Collider[] hits = Physics.OverlapSphere(transform.position, sightDistance, GameManager.instance.playerLayerMask);
+
+        // 가장 가까운 플레이어 찾기
+        closestPlayer = null;
+        float minDistance = sightDistance + 1f; // 최소 거리는 감지 거리에 1 더한 것으로 초기화
+        foreach (Collider hit in hits)
         {
-            // 플레이어 레이어에서 감지 거리 안에 있는 플레이어 콜라이더들 가져오기
-            Collider[] hits = Physics.OverlapSphere(transform.position, sightDistance, GameManager.instance.playerLayerMask);
+            Vector3 dirToTarget = (hit.transform.position - transform.position).normalized; // 적과 플레이어 간의 방향 벡터 계산
 
-            // 가장 가까운 플레이어 찾기
-            closestPlayer = null;
-            float minDistance = sightDistance + 1f; // 최소 거리는 감지 거리에 1 더한 것으로 초기화
-            foreach (Collider hit in hits)
+            Vector3 forwardDirection;
+            if (nav.isStopped)
+                forwardDirection = transform.forward;
+            else
+                forwardDirection = nav.velocity.normalized;
+
+            float angleToTarget = Vector3.Angle(forwardDirection, dirToTarget); // 앞을 바라보는 방향 벡터와 타겟과 적 간의 방향 벡터 사이의 각도 계산
+
+            float distance = Vector3.Distance(transform.position, hit.gameObject.transform.position); // 플레이어와의 거리 계산
+
+            if ((angleToTarget < fovAngle / 2f && distance <= sightDistance) || distance <= detectDistance) // 타겟이 추적 조건에 맞는지 비교(각도는 시야 각의 절반과 비교해야 함)
             {
-                Vector3 dirToTarget = hit.transform.position - transform.position; // 적과 플레이어 간의 방향 벡터 계산
+                Debug.DrawRay(transform.position + Vector3.up * 2f, dirToTarget * distance, Color.red);
 
-                float angleToTarget = Vector3.Angle(transform.forward, dirToTarget); // 앞을 바라보는 방향 벡터와 타겟과 적 간의 방향 벡터 사이의 각도 계산
+                Ray ray = new Ray(transform.position + Vector3.up * 2f, dirToTarget);
 
-                if ((angleToTarget < fovAngle / 2f && dirToTarget.magnitude <= sightDistance) || dirToTarget.magnitude <= detectDistance) // 타겟이 추적 조건에 맞는지 비교(각도는 시야 각의 절반과 비교해야 함)
+                if (Physics.Raycast(ray, out RaycastHit hit2, distance, GameManager.instance.mapLayerMask)) // 사이에 장애물이 있지 않으면
                 {
-                    float distance = Vector3.Distance(transform.position, hit.transform.position); // 적과의 거리 계산
-                    if (distance < minDistance) // 적과의 거리가 최소 거리보다 작을 때
-                    {
-                        minDistance = distance; // 최소 거리 갱신
-                        closestPlayer = hit.gameObject; // 가장 가까운 적 설정
-                    }
+                    Debug.Log("closest : " + hit2.collider.gameObject.name);
+                    continue;
+                }
+
+                if (distance < minDistance) // 플레이어와의 거리가 최소 거리보다 작을 때
+                {
+                    minDistance = distance; // 최소 거리 갱신
+                    closestPlayer = hit.gameObject; // 가장 가까운 플레이어 설정
                 }
             }
-            Debug.Log("closestPlayer: " + closestPlayer);
+        }
+        Debug.Log("closestPlayer: " + closestPlayer);
 
-            if (closestPlayer != null) // 가장 가까운 플레이어가 존재한다면
-            {
-                currentState = EnemyState.Chase; // 추적 상태로 변경
-                stopDistance = 5f;
-            }
-            // else
-            // {
-            //     currentState = EnemyState.Patrol; // 순찰 상태로 변경
-            //     stopDistance = 0.1f;
-            // }
+        if (closestPlayer != null) // 가장 가까운 플레이어가 존재한다면
+        {
+            currentState = EnemyState.Chase; // 추적 상태로 변경
+            stopDistance = 5f;
         }
     }
 
@@ -238,6 +249,12 @@ public class EnemyController : MonoBehaviour
                     Attack(closestPlayer);
                 }
             }
+        }
+        else
+        {
+            currentState = EnemyState.Patrol; // 순찰 상태로 변경
+            stopDistance = 0.1f;
+            SetNextPatrolPoint();
         }
     }
 

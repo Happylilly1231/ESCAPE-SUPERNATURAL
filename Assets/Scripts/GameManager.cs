@@ -26,6 +26,8 @@ public class GameManager : MonoBehaviour
     public GameObject[] Characters { get => characters; set => characters = value; }
     public GameObject[] CharacterCameras { get => characterCameras; set => characterCameras = value; }
 
+    public bool[] havingDocuments; // 문서 획득 여부
+
     void Awake()
     {
         if (instance == null)
@@ -34,7 +36,7 @@ public class GameManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
 
             // 레이어 마스크 할당
-            mapLayerMask = LayerMask.GetMask("Map");
+            mapLayerMask = LayerMask.GetMask("Map") | LayerMask.GetMask("InvisibleMap");
             playerLayerMask = LayerMask.GetMask("Player");
             enemyLayerMask = LayerMask.GetMask("Enemy");
 
@@ -42,6 +44,7 @@ public class GameManager : MonoBehaviour
             Characters = new GameObject[3];
             CharacterCameras = new GameObject[3];
             isCharactersClear = new bool[3];
+            havingDocuments = new bool[3];
         }
         else
         {
