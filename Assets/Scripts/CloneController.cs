@@ -16,6 +16,7 @@ public class CloneController : MonoBehaviour
     // 체력바
     public Slider hpBar;
     public TextMeshProUGUI hpTxt;
+    public int cloneNum; // 1부터 시작
 
     NavMeshAgent nav;
     Vector2 moveVec;
@@ -34,6 +35,8 @@ public class CloneController : MonoBehaviour
     bool isFollow; // 분신이 분신술 캐릭터 따라오기 선택 여부
 
     public bool IsFollow { get => isFollow; set => isFollow = value; }
+
+    GameObject triggerMachine;
 
     void Awake()
     {
@@ -277,16 +280,19 @@ public class CloneController : MonoBehaviour
     // 분신을 해제할 때(분신이 비활성화 할 때) 실행되는 함수
     void OnDisable()
     {
+        if (triggerMachine != null)
+            triggerMachine.GetComponent<DocumentCollectObject>().isExists[cloneNum + 2] = false;
         nav.enabled = false; // 사용하지 않으므로 NavMeshAgent 비활성화
     }
 
-    void OnTriggerStay(Collider other)
+    void OnTriggerEnter(Collider other)
     {
         if (other.tag == "Machine")
         {
+            triggerMachine = other.gameObject;
             if (other.GetComponent<DocumentCollectObject>().interactiveCharacterId == 1)
             {
-                other.GetComponent<DocumentCollectObject>().isExists[1] = true;
+                other.GetComponent<DocumentCollectObject>().isExists[cloneNum + 2] = true;
             }
         }
     }
@@ -295,9 +301,10 @@ public class CloneController : MonoBehaviour
     {
         if (other.tag == "Machine")
         {
+            triggerMachine = null;
             if (other.GetComponent<DocumentCollectObject>().interactiveCharacterId == 1)
             {
-                other.GetComponent<DocumentCollectObject>().isExists[1] = false;
+                other.GetComponent<DocumentCollectObject>().isExists[cloneNum + 2] = false;
             }
         }
     }

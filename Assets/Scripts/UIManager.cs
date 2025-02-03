@@ -29,6 +29,9 @@ public class UIManager : MonoBehaviour
     public Image[] cloneImgs;
     public GameObject bulletCntUI;
     public TextMeshProUGUI bulletCntTxt;
+    public GameObject researcherTimeAttackUI; // 연구원 카드키 획득 타임어택 쿨타임 이미지
+    public Image timeAttackDisableImg; // 연구원 카드키 획득 타임어택 쿨타임 남은 시간 이미지
+    public TextMeshProUGUI timeAttackRemainTimeText; // 연구원 카드키 획득 초능력 쿨타임 남은 시간 텍스트
 
     // 초능력 쿨타임
     public Image cooldownImg; // 초능력 쿨타임 이미지
@@ -200,11 +203,13 @@ public class UIManager : MonoBehaviour
         // 초능력 쿨타임 이미지 바꾸기 코드 추가
         cooldownDisableImg.fillAmount = 0;
         cooldownRemainTimeText.text = "";
+        cooldownImg.color = Color.white;
 
         // 초능력 지속시간 변경
         // 초능력 지속시간 이미지 바꾸기 코드 추가
         duraitonDisableImg.fillAmount = 0;
         durationRemainTimeText.text = "";
+        durationImg.color = Color.white;
     }
 
     public void SetHpBar(float curHp, float maxHp)
@@ -221,8 +226,13 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    public void ShowGuide(string content)
+    public void ShowGuide(string content, bool showNow)
     {
+        if (!showNow && curGuideCoroutine != null)
+        {
+            return;
+        }
+
         guideUI.SetActive(true);
         guideText.text = content;
 

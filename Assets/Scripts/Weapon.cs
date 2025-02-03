@@ -26,8 +26,8 @@ public class Weapon : MonoBehaviour
 
     void Start()
     {
-        curBulletCnt = maxBulletCnt;
-        canFire = true;
+        // curBulletCnt = maxBulletCnt;
+        // canFire = true;
     }
 
     public void Use(GameObject user)
@@ -45,6 +45,7 @@ public class Weapon : MonoBehaviour
     void OnEnable()
     {
         gameObject.transform.localRotation = Quaternion.Euler(originalRotation);
+        canFire = true;
     }
 
     IEnumerator Fire(GameObject user)
@@ -58,7 +59,7 @@ public class Weapon : MonoBehaviour
         yield return new WaitForSeconds(0.1f);
 
         Ray ray;
-        int layerMask = layerMask = GameManager.instance.enemyLayerMask | GameManager.instance.mapLayerMask;
+        int layerMask = GameManager.instance.enemyLayerMask | GameManager.instance.mapLayerMask;
         if (user == GameManager.instance.Characters[GameManager.instance.selectCharacterId])
         {
             Debug.Log("현재 플레이 중인 플레이어의 공격입니다.");
@@ -132,7 +133,11 @@ public class Weapon : MonoBehaviour
             yield return null;
         }
         curBulletCnt--;
-        UIManager.instance.bulletCntTxt.text = curBulletCnt.ToString() + " / " + maxBulletCnt.ToString();
+
+        PlayerController playerController = user.GetComponent<PlayerController>();
+        if (playerController != null)
+            if (playerController.canUIUpdate)
+                UIManager.instance.bulletCntTxt.text = curBulletCnt.ToString() + " / " + maxBulletCnt.ToString();
 
         canFire = true;
 

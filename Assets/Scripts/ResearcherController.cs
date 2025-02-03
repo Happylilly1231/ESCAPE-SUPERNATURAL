@@ -99,7 +99,15 @@ public class ResearcherController : MonoBehaviour
         {
             isLooking = false;
             currentState = ResearcherState.Patrol;
+            if (UIManager.instance.researcherTimeAttackUI.activeSelf)
+                StartCoroutine(HideResearcherTimeAttackUI());
         }
+    }
+
+    IEnumerator HideResearcherTimeAttackUI()
+    {
+        yield return new WaitForSeconds(1f);
+        UIManager.instance.researcherTimeAttackUI.SetActive(false);
     }
 
     // 가만히 있을 때(대기할 때) 함수
@@ -158,6 +166,17 @@ public class ResearcherController : MonoBehaviour
 
         stolenTimer += Time.deltaTime;
 
+        if (stealer.GetComponent<PlayerController>().canUIUpdate)
+        {
+            UIManager.instance.timeAttackDisableImg.fillAmount = stolenTimer / 3f;
+            UIManager.instance.timeAttackRemainTimeText.text = stolenTimer.ToString("F1") + "s";
+        }
+        else
+        {
+            if (UIManager.instance.researcherTimeAttackUI.activeSelf)
+                UIManager.instance.researcherTimeAttackUI.SetActive(false);
+        }
+
         if (stolenTimer >= 3f)
         {
             stolenTimer = 0f;
@@ -185,6 +204,7 @@ public class ResearcherController : MonoBehaviour
         havingKeyCard = false;
         Debug.Log(stealer + "에게 " + keyCardLevel + "급 카드키를 빼앗겼습니다.");
         currentState = ResearcherState.Stolen;
+        UIManager.instance.researcherTimeAttackUI.SetActive(true);
     }
 
     void OnDrawGizmos()

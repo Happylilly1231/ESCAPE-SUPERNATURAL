@@ -83,11 +83,11 @@ MonoBehaviour:
   - {fileID: 3128967627448904884}
   - {fileID: 9098013477934705277}
   equipWeapons: []
-  supernaturalCoolDown: 0
   characterCamera: {fileID: 3257236862099975535}
   canvas: {fileID: 681742490177686879}
   hpBar: {fileID: 4216385851100308890}
   hpTxt: {fileID: 4091004469526917316}
+  isGrounded: 0
   nav: {fileID: 0}
   targetCharacter: {fileID: 0}
   havingKeyCardLevel: 
@@ -184,9 +184,9 @@ CapsuleCollider:
   m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.55
-  m_Height: 2
+  m_Height: 1.8
   m_Direction: 1
-  m_Center: {x: 0, y: 1.3, z: 0}
+  m_Center: {x: 0, y: 1.5, z: 0}
 --- !u!1 &2541756786508821882
 GameObject:
   m_ObjectHideFlags: 0

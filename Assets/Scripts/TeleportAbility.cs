@@ -9,11 +9,9 @@ public class TeleportAbility : MonoBehaviour, ISupernatural
     public GameObject teleportTogetherPosCircle; // 함께 순간이동 목표 위치를 나타내는 원
     GameObject teleportPosCircle; // 순간이동 목표 위치를 나타내는 원
     float limitDistance = 10f; // 제한 거리
-    bool canUIUpdate;
     GameObject anotherTeleportCharacter;
     float canTeleportTogetherDistance = 3f;
 
-    public bool CanUIUpdate { get => canUIUpdate; set => canUIUpdate = value; }
     public float SupernaturalCoolDown { get => supernaturalCoolDown; set => supernaturalCoolDown = value; }
     public float CooldownRemainTime { get => cooldownRemainTime; set => cooldownRemainTime = value; }
     public bool IsSupernaturalReady { get => isSupernaturalReady; set => isSupernaturalReady = value; }
@@ -22,8 +20,13 @@ public class TeleportAbility : MonoBehaviour, ISupernatural
     float cooldownRemainTime;
     bool isSupernaturalReady = true; // 초능력 사용 가능 여부
 
-    void Start()
+    bool isTeleporting;
+    bool canTeleport;
+    PlayerController playerController;
+
+    void Awake()
     {
+        playerController = GetComponent<PlayerController>();
         teleportPosCircle = teleportAlonePosCircle;
         teleportAlonePosCircle.SetActive(false);
         teleportTogetherPosCircle.SetActive(false);
@@ -31,18 +34,27 @@ public class TeleportAbility : MonoBehaviour, ISupernatural
 
     public void Activate()
     {
-        StartCoroutine(Teleport()); // 순간이동 코루틴 실행
+        if (!isTeleporting)
+        {
+            canTeleport = true;
+            StartCoroutine(Teleport()); // 순간이동 코루틴 실행
+        }
     }
 
     public void Deactivate()
     {
-        CanUIUpdate = false;
+        if (isTeleporting)
+        {
+            canTeleport = false;
+            teleportPosCircle.SetActive(false);
+        }
     }
 
     // 순간 이동
     IEnumerator Teleport()
     {
-        while (true)
+        isTeleporting = true;
+        while (canTeleport)
         {
             FindAnotherTeleport();
 
@@ -72,7 +84,7 @@ public class TeleportAbility : MonoBehaviour, ISupernatural
                 {
                     if (!teleportPosCircle.GetComponent<CheckTargetPos>().isMoveOkay)
                     {
-                        UIManager.instance.ShowGuide("해당 위치가 순간이동하기에 불완전합니다.");
+                        UIManager.instance.ShowGuide("해당 위치가 순간이동하기에 불완전합니다.", true);
                     }
                     else
                     {
@@ -96,6 +108,7 @@ public class TeleportAbility : MonoBehaviour, ISupernatural
 
             yield return null;
         }
+        isTeleporting = false;
     }
 
     void FindAnotherTeleport()
@@ -143,14 +156,14 @@ public class TeleportAbility : MonoBehaviour, ISupernatural
         {
             CooldownRemainTime -= Time.deltaTime;
 
-            if (canUIUpdate)
+            if (playerController.canUIUpdate)
             {
                 UIManager.instance.cooldownDisableImg.fillAmount = CooldownRemainTime / SupernaturalCoolDown;
                 UIManager.instance.cooldownRemainTimeText.text = CooldownRemainTime.ToString("F1") + "s";
             }
             yield return null;
         }
-        if (canUIUpdate)
+        if (playerController.canUIUpdate)
             UIManager.instance.cooldownRemainTimeText.text = "";
 
         IsSupernaturalReady = true;

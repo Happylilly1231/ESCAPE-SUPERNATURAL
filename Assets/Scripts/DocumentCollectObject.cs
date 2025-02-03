@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -20,35 +21,34 @@ public class DocumentCollectObject : MonoBehaviour
     public Vector3 moveAmount;
     public int canMoveObstacleCharacterCnt;
 
-    float hackingTime = 5f;
+    float hackingTime = 4f;
 
     void Start()
     {
-        isExists = new bool[3];
+        isExists = new bool[6];
     }
 
-    public void Exist(int characterId, bool canUIUpdate)
-    {
-        isExists[characterId] = true;
-        if (canUIUpdate)
-        {
-            string text = "";
-            switch (documentCollectObjectType)
-            {
-                case DocumentCollectObjectType.Computer:
-                    text = "분신술 능력을 사용하여 여러 대의 컴퓨터로 빠르게 해킹할 수 있습니다. 소요 시간 : 5초";
-                    break;
-                case DocumentCollectObjectType.LockedCabinet:
-                    text = "물질통과 능력을 사용하여 증거를 꺼낼 수 있습니다.";
-                    break;
-                case DocumentCollectObjectType.Obstacle:
-                    text = "장애물을 이동시키기 위해, 최소 2명이 필요합니다.";
-                    break;
-            }
-            if (UIManager.instance.curGuideCoroutine == null)
-                UIManager.instance.ShowGuide(text);
-        }
-    }
+    // public void Exist(int characterId, bool canUIUpdate)
+    // {
+    //     isExists[characterId] = true;
+    //     if (canUIUpdate)
+    //     {
+    //         string text = "";
+    //         switch (documentCollectObjectType)
+    //         {
+    //             case DocumentCollectObjectType.Computer:
+    //                 text = "Sophia가 분신술 능력을 사용하여 여러 대의 컴퓨터로 빠르게 해킹할 수 있습니다. 나머지 컴퓨터 앞에 분신이 있다면 F키를 누르세요. 소요 시간 : 4초";
+    //                 break;
+    //             case DocumentCollectObjectType.LockedCabinet:
+    //                 text = "F키를 누르고 R키로 물질통과 능력을 사용하여 증거를 꺼낼 수 있습니다.";
+    //                 break;
+    //             case DocumentCollectObjectType.Obstacle:
+    //                 text = "장애물을 이동시키기 위해, 최소 2명이 필요합니다. F키를 사용하여 이동시키세요.";
+    //                 break;
+    //         }
+    //         UIManager.instance.ShowGuide(text, false);
+    //     }
+    // }
 
     public void Activate()
     {
@@ -75,10 +75,10 @@ public class DocumentCollectObject : MonoBehaviour
         {
             for (int i = 0; i < computers.Length; i++)
             {
-                if (!computers[i].isExists[interactiveCharacterId])
+                if (!computers[i].isExists[interactiveCharacterId] && !computers[i].isExists[3] && !computers[i].isExists[4] && !computers[i].isExists[5])
                 {
                     hackingCanvas.gameObject.SetActive(false);
-                    UIManager.instance.ShowGuide("해킹에 실패했습니다.");
+                    UIManager.instance.ShowGuide("해킹에 실패했습니다.", true);
                     hackingCanvas.gameObject.SetActive(false);
                     yield break;
                 }
@@ -98,6 +98,7 @@ public class DocumentCollectObject : MonoBehaviour
 
         if (secretPassageGate != null)
         {
+            UIManager.instance.ShowGuide("비밀 통로가 열렸습니다.", true);
             secretPassageGate.Activate(); // 비밀 통로 오픈
         }
         else
@@ -106,7 +107,7 @@ public class DocumentCollectObject : MonoBehaviour
 
             if (documentId == 0)
             {
-                UIManager.instance.ShowGuide("제2실험실에서 비인간적인 실험 내용에 관한 증거를 획득했습니다.");
+                UIManager.instance.ShowGuide("제2실험실에서 비인간적인 실험 내용에 관한 증거를 획득했습니다.", true);
                 QuestManager.instance.QuestClear(1, 1); // 스테이지 1의 세번째 퀘스트 완료
             }
         }
@@ -131,12 +132,12 @@ public class DocumentCollectObject : MonoBehaviour
 
                 if (documentId == 1)
                 {
-                    UIManager.instance.ShowGuide("샘플저장소에서 불법적인 약물 실험에 관한 증거를 획득했습니다.");
+                    UIManager.instance.ShowGuide("샘플저장소에서 불법적인 약물 실험에 관한 증거를 획득했습니다.", true);
                     QuestManager.instance.QuestClear(1, 2); // 스테이지 1의 세번째 퀘스트 완료
                 }
                 else if (documentId == 2)
                 {
-                    UIManager.instance.ShowGuide("제2훈련실에서 불법적인 무기들에 대한 증거를 획득했습니다.");
+                    UIManager.instance.ShowGuide("제2훈련실에서 불법적인 무기들에 대한 증거를 획득했습니다.", true);
                     QuestManager.instance.QuestClear(1, 3); // 스테이지 1의 네번째 퀘스트 완료
                 }
 
@@ -180,6 +181,39 @@ public class DocumentCollectObject : MonoBehaviour
 
             Debug.Log("장애물 이동 완료!");
             gameObject.GetComponent<SphereCollider>().enabled = false;
+        }
+    }
+
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.gameObject.tag == "Player")
+        {
+            isExists[other.gameObject.GetComponent<PlayerController>().characterId] = true;
+            if (other.gameObject.GetComponent<PlayerController>().canUIUpdate)
+            {
+                string text = "";
+                switch (documentCollectObjectType)
+                {
+                    case DocumentCollectObjectType.Computer:
+                        text = "Sophia가 분신술 능력을 사용하여 여러 대의 컴퓨터로 빠르게 해킹할 수 있습니다. 나머지 컴퓨터 앞에 분신이 있다면 F키를 누르세요. 소요 시간 : 4초";
+                        break;
+                    case DocumentCollectObjectType.LockedCabinet:
+                        text = "F키를 누르고 R키로 물질통과 능력을 사용하여 증거를 꺼낼 수 있습니다.";
+                        break;
+                    case DocumentCollectObjectType.Obstacle:
+                        text = "장애물을 이동시키기 위해, 최소 2명이 필요합니다. F키를 사용하여 이동시키세요.";
+                        break;
+                }
+                UIManager.instance.ShowGuide(text, false);
+            }
+        }
+    }
+
+    void OnTriggerExit(Collider other)
+    {
+        if (other.gameObject.tag == "Player")
+        {
+            isExists[other.gameObject.GetComponent<PlayerController>().characterId] = true;
         }
     }
 }

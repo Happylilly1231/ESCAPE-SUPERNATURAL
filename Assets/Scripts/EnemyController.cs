@@ -50,6 +50,7 @@ public class EnemyController : MonoBehaviour
     {
         patrolPoints = enemyPatrolPoints.GetComponent<ShowPatrolPath>().patrolPoints; // 순찰 지점 배열 가져오기
         transform.position = patrolPoints[0].position; // 처음 순찰 지점으로 위치 초기화
+        enemyWeapon.GetComponent<Weapon>().curBulletCnt = enemyWeapon.GetComponent<Weapon>().maxBulletCnt;
     }
 
     void Update()

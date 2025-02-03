@@ -121,12 +121,14 @@ public class PlayerController : MonoBehaviour
 
     // float cooldownRemainTime;
 
-    bool canUIUpdate;
+    public bool canUIUpdate;
 
     bool haveCorrectKeyCard;
     public bool[] havingKeyCardLevel; // 카드키 레밸에 따른 소유 여부 ###저장 필요###
 
     public bool isWalking;
+
+    CloningAbility cloningAbility;
 
     void Awake()
     {
@@ -161,6 +163,8 @@ public class PlayerController : MonoBehaviour
         {
             characterCamera.SetActive(false);
         }
+
+        cloningAbility = supernatural as CloningAbility;
     }
 
     void Start()
@@ -189,7 +193,6 @@ public class PlayerController : MonoBehaviour
             {
                 nav.enabled = false;
                 isPlayingCharacter = true;
-                supernatural.CanUIUpdate = true;
                 canUIUpdate = true;
                 canvas.gameObject.SetActive(false);
             }
@@ -226,9 +229,9 @@ public class PlayerController : MonoBehaviour
 
                 nav.enabled = true;
                 isPlayingCharacter = false;
-                supernatural.Deactivate();
                 canUIUpdate = false;
                 canvas.gameObject.SetActive(true);
+                supernatural.Deactivate();
             }
 
             // 따라갈 캐릭터가 있다면 추적
@@ -240,7 +243,7 @@ public class PlayerController : MonoBehaviour
                 float distanceToTarget = Vector3.Distance(transform.position, targetCharacter.position);
 
                 // 일정 거리 안으로 가까워지면 멈춤
-                if (distanceToTarget <= 3f)
+                if (distanceToTarget <= 2f)
                 {
                     nav.isStopped = true;
                     anim.SetBool("Moving", false);
@@ -337,23 +340,35 @@ public class PlayerController : MonoBehaviour
         inputs.fire = Input.GetMouseButtonDown(0); // 공격
         inputs.aim = Input.GetMouseButtonDown(1); // 조준
 
-        if (Input.GetKeyDown(KeyCode.Alpha1)) // 주무기 1번
+        bool canSelectWeapon = false;
+        if (cloningAbility != null)
         {
-            if (selectWeaponId == 0) selectWeaponId = -1;
-            else selectWeaponId = 0;
-            SelectWeapon();
+            if (!cloningAbility.isSelectingToFollow && !cloningAbility.isMoving)
+                canSelectWeapon = true;
         }
-        else if (Input.GetKeyDown(KeyCode.Alpha2)) // 주무기 2번
+        else
+            canSelectWeapon = true;
+
+        if (canSelectWeapon)
         {
-            if (selectWeaponId == 1) selectWeaponId = -1;
-            else selectWeaponId = 1;
-            SelectWeapon();
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha3)) // 주무기 3번
-        {
-            if (selectWeaponId == 2) selectWeaponId = -1;
-            else selectWeaponId = 2;
-            SelectWeapon();
+            if (Input.GetKeyDown(KeyCode.Alpha1)) // 주무기 1번
+            {
+                if (selectWeaponId == 0) selectWeaponId = -1;
+                else selectWeaponId = 0;
+                SelectWeapon();
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha2)) // 주무기 2번
+            {
+                if (selectWeaponId == 1) selectWeaponId = -1;
+                else selectWeaponId = 1;
+                SelectWeapon();
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha3)) // 주무기 3번
+            {
+                if (selectWeaponId == 2) selectWeaponId = -1;
+                else selectWeaponId = 2;
+                SelectWeapon();
+            }
         }
 
         // 인벤토리 현재 클릭된 오브젝트 버리기
@@ -530,7 +545,7 @@ public class PlayerController : MonoBehaviour
             anim.SetTrigger("Jump");
             rigid.AddForce(Vector3.up * jumpForce, ForceMode.Impulse); // 점프
             CheckGround(); // 땅에서 떨어졌으므로 체크
-                           // anim.SetBool("Jump", false); // 점프 변수 false로 다시 초기화
+            // anim.SetBool("Jump", false); // 점프 변수 false로 다시 초기화
         }
 
         // 총을 들고 있을 때
@@ -714,7 +729,7 @@ public class PlayerController : MonoBehaviour
 
                     if (canUIUpdate)
                     {
-                        UIManager.instance.ShowGuide(researcherController.keyCardLevel.ToString() + "급 카드키를 획득했습니다.");
+                        UIManager.instance.ShowGuide(researcherController.keyCardLevel.ToString() + "급 카드키를 획득했습니다.", true);
                         UIManager.instance.keyCardLevelImgs[researcherController.keyCardLevel - 1].SetActive(true);
                     }
 
@@ -756,15 +771,23 @@ public class PlayerController : MonoBehaviour
         int weaponId = item.id; // 무기 종류 식별
 
         int equipId = -1;
-        if (weaponId >= 2) // 주 무기
+        for (int i = 0; i < equipWeapons.Length; i++)
         {
-            if (equipWeapons[0] == null) equipId = 0;
-            else if (equipWeapons[1] == null) equipId = 1;
+            if (equipWeapons[i] == null)
+            {
+                equipId = i;
+                break;
+            }
         }
-        else // 보조 무기
-        {
-            if (equipWeapons[2] == null) equipId = 2;
-        }
+        // if (weaponId >= 2) // 주 무기
+        // {
+        //     if (equipWeapons[0] == null) equipId = 0;
+        //     else if (equipWeapons[1] == null) equipId = 1;
+        // }
+        // else // 보조 무기
+        // {
+        //     if (equipWeapons[2] == null) equipId = 2;
+        // }
 
         if (equipId != -1) // 무기 장착
         {
@@ -779,7 +802,7 @@ public class PlayerController : MonoBehaviour
         else // 무기 장착 실패
         {
             Debug.Log("무기를 더 장착할 수 없습니다!");
-            UIManager.instance.ShowGuide("무기를 더 장착할 수 없습니다!");
+            UIManager.instance.ShowGuide("무기를 더 장착할 수 없습니다!", true);
         }
     }
 
@@ -922,11 +945,11 @@ public class PlayerController : MonoBehaviour
         if (other.tag == "Weapon" || other.tag == "CardReader" || other.tag == "Researcher" || other.tag == "Machine")
         {
             nearObj = other.gameObject;
-            if (other.tag == "Machine")
-            {
-                DocumentCollectObject documentCollectObject = other.gameObject.GetComponent<DocumentCollectObject>();
-                documentCollectObject.Exist(characterId, canUIUpdate);
-            }
+            // if (other.tag == "Machine")
+            // {
+            //     DocumentCollectObject documentCollectObject = other.gameObject.GetComponent<DocumentCollectObject>();
+            //     documentCollectObject.Exist(characterId, canUIUpdate);
+            // }
         }
 
         Debug.Log(nearObj);
@@ -937,10 +960,10 @@ public class PlayerController : MonoBehaviour
         if (other.tag == "Weapon" || other.tag == "CardReader" || other.tag == "Researcher" || other.tag == "Machine")
         {
             nearObj = null;
-            if (other.tag == "Machine")
-            {
-                other.gameObject.GetComponent<DocumentCollectObject>().isExists[characterId] = false;
-            }
+            // if (other.tag == "Machine")
+            // {
+            //     other.gameObject.GetComponent<DocumentCollectObject>().isExists[characterId] = false;
+            // }
         }
     }
 

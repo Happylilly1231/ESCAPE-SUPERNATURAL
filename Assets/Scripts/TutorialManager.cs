@@ -18,9 +18,9 @@ public class TutorialManager : MonoBehaviour
         "E키를 눌러 캐릭터를 전환할 수 있습니다. Sophia로 전환해 보세요.|1|E",
         "Sophia는 분신술 초능력 소유자입니다. 최대 3명까지 분신을 만들 수 있습니다. 1명은 40초, 2명은 30초, 3명은 20초 동안 유지 가능합니다.",
         "R키를 눌러 능력을 사용하여 분신을 만들어보세요.|1|R",
-        "넘버패드 1, 2, 3키 중 하나를 눌러 따라오게 할 분신을 선택하세요.|1|123",
+        "V키를 누르고 위 숫자 1, 2, 3키 중 하나를 눌러 따라오게 할 분신을 선택하세요.|1|123",
         "다시 같은 방법으로 진행하면 따라오는 것을 해제할 수 있습니다.",
-        "넘버패드 4, 5, 6키 중 하나를 눌러 이동을 원하는 분신을 선택하세요.|1|456",
+        "T키를 누르고 위 숫자 1, 2, 3키 중 하나를 눌러 이동을 원하는 분신을 선택하세요.|1|123",
         "화면을 움직여 목표 위치를 이동시키고, T키를 눌러 위치를 확정하세요.",
         "E키를 눌러 Ethan을 선택하세요.|2|E",
         "Ethan은 순간이동 초능력 소유자입니다. 1명을 데리고 순간이동할 수도 있습니다. 높은 곳으로 이동할 수 있습니다.",
@@ -139,11 +139,7 @@ public class TutorialManager : MonoBehaviour
                             }
                             else if (splitTexts[2] == "123")
                             {
-                                isInput = Input.GetKeyDown(KeyCode.Keypad1) || Input.GetKeyDown(KeyCode.Keypad2) || Input.GetKeyDown(KeyCode.Keypad3);
-                            }
-                            else if (splitTexts[2] == "456")
-                            {
-                                isInput = Input.GetKeyDown(KeyCode.Keypad4) || Input.GetKeyDown(KeyCode.Keypad5) || Input.GetKeyDown(KeyCode.Keypad6);
+                                isInput = Input.GetKeyDown(KeyCode.Alpha1) || Input.GetKeyDown(KeyCode.Alpha2) || Input.GetKeyDown(KeyCode.Alpha3);
                             }
                             else if (splitTexts[2] == "T")
                             {

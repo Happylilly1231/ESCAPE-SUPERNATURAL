@@ -113,6 +113,7 @@ public class GameManager : MonoBehaviour
         DataManager.instance.LoadGameData();
         Debug.Log("스테이지 " + curStageId + " 부터 게임 시작!");
         selectCharacterId = 0;
+        Continue();
         SceneManager.LoadScene("Stage" + curStageId.ToString());
     }
 
@@ -221,14 +222,9 @@ public class GameManager : MonoBehaviour
     {
         Debug.Log("다음 스테이지 : " + curStageId + " (으)로 이동!");
 
-        // 임시 엔딩
-        if (curStageId == 2)
-        {
-            SceneManager.LoadScene("Ending");
-            return;
-        }
+        SceneManager.LoadScene("Ending");
 
-        GameStart();
+        // GameStart();
     }
 
     // 메인 메뉴로 이동 함수 (Main Menu 버튼에서 이용)

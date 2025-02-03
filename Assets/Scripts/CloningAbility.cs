@@ -15,9 +15,6 @@ public class CloningAbility : MonoBehaviour, ISupernatural
     float limitDistance = 10f; // 분신 위치 조정 제한 거리
     float durationRemainTime; // 남은 지속시간
 
-    bool canUIUpdate;
-
-    public bool CanUIUpdate { get => canUIUpdate; set => canUIUpdate = value; }
     public float SupernaturalCoolDown { get => supernaturalCoolDown; set => supernaturalCoolDown = value; }
     public float CooldownRemainTime { get => cooldownRemainTime; set => cooldownRemainTime = value; }
     public bool IsSupernaturalReady { get => isSupernaturalReady; set => isSupernaturalReady = value; }
@@ -28,9 +25,16 @@ public class CloningAbility : MonoBehaviour, ISupernatural
 
     Color cloneImgColor;
     int selectId = -1;
-    bool isMoving = false;
-    bool isSelectingToFollow = false;
+    public bool isMoving = false;
+    public bool isSelectingToFollow = false;
     bool isCloning;
+
+    PlayerController playerController;
+
+    void Awake()
+    {
+        playerController = GetComponent<PlayerController>();
+    }
 
     void Start()
     {
@@ -55,7 +59,9 @@ public class CloningAbility : MonoBehaviour, ISupernatural
 
     public void Deactivate()
     {
-        CanUIUpdate = false;
+        cloneOutPosBox.SetActive(false);
+        cloningUI.SetActive(false); // 분신 수를 선택할 UI 비활성화
+        UIManager.instance.cloneUI.SetActive(false);
     }
 
     // 분신술
@@ -96,7 +102,7 @@ public class CloningAbility : MonoBehaviour, ISupernatural
         {
             durationRemainTime -= Time.deltaTime;
 
-            if (CanUIUpdate)
+            if (playerController.canUIUpdate)
             {
                 // 지속시간 UI에서 업데이트
                 UIManager.instance.duraitonDisableImg.fillAmount = durationRemainTime / duration;
@@ -108,7 +114,7 @@ public class CloningAbility : MonoBehaviour, ISupernatural
 
         isCloning = false;
 
-        if (CanUIUpdate)
+        if (playerController.canUIUpdate)
             UIManager.instance.durationRemainTimeText.text = "";
 
         // 활성화했던 분신 비활성화
@@ -128,7 +134,7 @@ public class CloningAbility : MonoBehaviour, ISupernatural
     {
         if (!cloneOutPosBox.GetComponent<CheckTargetPos>().isMoveOkay)
         {
-            UIManager.instance.ShowGuide("해당 위치가 분신을 꺼내기에 불완전합니다.");
+            UIManager.instance.ShowGuide("해당 위치가 분신을 꺼내기에 불완전합니다.", true);
         }
         else
         {
@@ -148,41 +154,32 @@ public class CloningAbility : MonoBehaviour, ISupernatural
         {
             if (!GameManager.instance.isAllowOnlyUIInput)
             {
-                if (Input.GetKeyDown(KeyCode.Keypad1))
+                if (Input.GetKeyDown(KeyCode.V))
                 {
-                    Debug.Log("1번 분신 선택");
-                    selectId = 0;
                     isSelectingToFollow = true;
                 }
-                else if (Input.GetKeyDown(KeyCode.Keypad2))
+                else if (Input.GetKeyDown(KeyCode.T) && !isSelectingToFollow && !isMoving) // 분신이 따라오는 동안에는 목표 위치 설정 못함
                 {
-                    Debug.Log("2번 분신 선택");
-                    selectId = 1;
-                    isSelectingToFollow = true;
-                }
-                else if (Input.GetKeyDown(KeyCode.Keypad3))
-                {
-                    Debug.Log("3번 분신 선택");
-                    selectId = 2;
-                    isSelectingToFollow = true;
-                }
-                else if (Input.GetKeyDown(KeyCode.Keypad4))
-                {
-                    Debug.Log("1번 분신 선택");
-                    selectId = 0;
                     isMoving = true;
                 }
-                else if (Input.GetKeyDown(KeyCode.Keypad5))
+
+                if (isSelectingToFollow || isMoving)
                 {
-                    Debug.Log("2번 분신 선택");
-                    selectId = 1;
-                    isMoving = true;
-                }
-                else if (Input.GetKeyDown(KeyCode.Keypad6))
-                {
-                    Debug.Log("3번 분신 선택");
-                    selectId = 2;
-                    isMoving = true;
+                    if (Input.GetKeyDown(KeyCode.Alpha1))
+                    {
+                        Debug.Log("1번 분신 선택");
+                        selectId = 0;
+                    }
+                    else if (Input.GetKeyDown(KeyCode.Alpha2))
+                    {
+                        Debug.Log("2번 분신 선택");
+                        selectId = 1;
+                    }
+                    else if (Input.GetKeyDown(KeyCode.Alpha3))
+                    {
+                        Debug.Log("3번 분신 선택");
+                        selectId = 2;
+                    }
                 }
             }
         }
@@ -254,7 +251,7 @@ public class CloningAbility : MonoBehaviour, ISupernatural
                     {
                         if (!clonePosCircle.GetComponent<CheckTargetPos>().isMoveOkay)
                         {
-                            UIManager.instance.ShowGuide("해당 위치가 순간이동하기에 불완전합니다.");
+                            UIManager.instance.ShowGuide("해당 위치가 순간이동하기에 불완전합니다.", true);
                         }
                         else
                         {
@@ -268,7 +265,7 @@ public class CloningAbility : MonoBehaviour, ISupernatural
                     }
                     else if (!clonePosCircle.GetComponent<CheckTargetPos>().isMoveOkay)
                     {
-                        UIManager.instance.ShowGuide("해당 위치가 이동하기에 불완전합니다.");
+                        UIManager.instance.ShowGuide("해당 위치가 이동하기에 불완전합니다.", true);
                     }
                 }
             }
@@ -285,14 +282,14 @@ public class CloningAbility : MonoBehaviour, ISupernatural
         {
             CooldownRemainTime -= Time.deltaTime;
 
-            if (canUIUpdate)
+            if (playerController.canUIUpdate)
             {
                 UIManager.instance.cooldownDisableImg.fillAmount = CooldownRemainTime / SupernaturalCoolDown;
                 UIManager.instance.cooldownRemainTimeText.text = CooldownRemainTime.ToString("F1") + "s";
             }
             yield return null;
         }
-        if (canUIUpdate)
+        if (playerController.canUIUpdate)
             UIManager.instance.cooldownRemainTimeText.text = "";
 
         IsSupernaturalReady = true;

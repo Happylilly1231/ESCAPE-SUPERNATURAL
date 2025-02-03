@@ -18,6 +18,7 @@ TagManager:
   - CanPassTeleport
   - InnerWall
   - Clone
+  - Floor
   layers:
   - Default
   - TransparentFX
