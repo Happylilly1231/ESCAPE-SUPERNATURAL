@@ -83,10 +83,19 @@ public class Weapon : MonoBehaviour
                 hit.collider.gameObject.GetComponent<EnemyController>().Damage(damage);
                 Debug.Log("적이 총알에 맞았습니다!");
             }
-            else if (user.tag == "Enemy" && (hit.collider.gameObject.tag == "Player" || hit.collider.gameObject.tag == "Clone"))
+            else if (user.tag == "Enemy")
             {
-                hit.collider.gameObject.GetComponent<PlayerController>().Damage(damage);
-                Debug.Log("플레이어가 총알에 맞았습니다!");
+                if (hit.collider.gameObject.tag == "Player")
+                {
+                    hit.collider.gameObject.GetComponent<PlayerController>().Damage(damage);
+                    Debug.Log("플레이어가 총알에 맞았습니다!");
+                }
+                else if (hit.collider.gameObject.tag == "Clone")
+                {
+                    hit.collider.gameObject.GetComponent<CloneController>().Damage(damage);
+                    Debug.Log("분신이 총알에 맞았습니다!");
+                }
+
             }
         }
         else
@@ -123,6 +132,7 @@ public class Weapon : MonoBehaviour
             yield return null;
         }
         curBulletCnt--;
+        UIManager.instance.bulletCntTxt.text = curBulletCnt.ToString() + " / " + maxBulletCnt.ToString();
 
         canFire = true;
 

@@ -7,20 +7,28 @@ using UnityEngine.UI;
 public class UIManager : MonoBehaviour
 {
     public static UIManager instance;
+
+    public GameObject mapUI;
+    public GameObject settingUI;
+    public Button mainMenuBtn;
     public GameObject playerUI;
-    public GameObject controlsWindow;
-    public GameObject interactionUI;
 
     // Main UI
     public Image[] equipWeaponImgs; // 장착 무기 이미지 배열
     public Sprite[] weaponImgs; // 무기 스프라이트 배열
+    public Image characterProfileImg;
     public TextMeshProUGUI characterName; // 캐릭터 이름
+    public GameObject[] keyCardLevelImgs; // 카드키 레벨 이미지 배열
     public GameObject[] characterBtns; // 따라오게 할 캐릭터 선택 배열
+    public GameObject[] isFollowImgs; // 캐릭터가 따라오고 있는 중인지 표시하는 이미지
     public Slider hpBar; // 캐릭터 체력 바
-
+    public TextMeshProUGUI hpTxt;
     public GameObject hpBarPrefab; // 체력 바 프리팹
-
     public Image crosshair; // 조준점 이미지
+    public GameObject cloneUI;
+    public Image[] cloneImgs;
+    public GameObject bulletCntUI;
+    public TextMeshProUGUI bulletCntTxt;
 
     // 초능력 쿨타임
     public Image cooldownImg; // 초능력 쿨타임 이미지
@@ -34,6 +42,10 @@ public class UIManager : MonoBehaviour
 
     public Button[] characterSelectBtn; // 캐릭터 선택 버튼 배열
     public Button[] cloneCntBtn; // 분신 수 선택 버튼 배열
+
+    public GameObject guideUI; // 가이드 UI
+    public TextMeshProUGUI guideText; // 가이드 텍스트
+    public IEnumerator curGuideCoroutine;
 
     void Awake()
     {
@@ -49,7 +61,10 @@ public class UIManager : MonoBehaviour
 
     void Start()
     {
-        PlayingCharacterSetting(GameManager.instance.selectCharacterId);
+        GameManager.instance.SelectCharacter(GameManager.instance.selectCharacterId);
+        // PlayingCharacterSetting(GameManager.instance.selectCharacterId);
+
+        mainMenuBtn.onClick.AddListener(GameManager.instance.MoveToMainMenu);
 
         for (int i = 0; i < 3; i++)
         {
@@ -64,62 +79,69 @@ public class UIManager : MonoBehaviour
 
     void Update()
     {
-        // 플레이어 UI 켜기/끄기
+        // 맵 UI 켜기/끄기
         if (Input.GetKeyDown(KeyCode.M))
         {
-            playerUI.SetActive(!playerUI.activeSelf);
-
-            if (Cursor.lockState == CursorLockMode.Locked)
+            if (!mapUI.activeSelf)
             {
+                mapUI.SetActive(true);
                 // GameManager.instance.Pause();
-                Cursor.lockState = CursorLockMode.None; // 커서 해제
-                Cursor.visible = true; // 커서 보이기
+                // Cursor.lockState = CursorLockMode.None; // 커서 해제
+                // Cursor.visible = true; // 커서 보이기
             }
             else
             {
+                mapUI.SetActive(false);
                 // GameManager.instance.Continue();
-                Cursor.lockState = CursorLockMode.Locked; // 커서 고정
-                Cursor.visible = false; // 커서 숨기기
+                // Cursor.lockState = CursorLockMode.Locked; // 커서 고정
+                // Cursor.visible = false; // 커서 숨기기
             }
         }
 
-        // 컨트롤 UI 켜기/끄기
+        // 설정 UI 켜기/끄기
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            controlsWindow.SetActive(!controlsWindow.activeSelf);
-
-            if (Cursor.lockState == CursorLockMode.Locked)
+            if (!settingUI.activeSelf)
             {
+                settingUI.SetActive(true);
                 GameManager.instance.Pause();
-                Cursor.lockState = CursorLockMode.None; // 커서 해제
-                Cursor.visible = true; // 커서 보이기
             }
             else
             {
+                settingUI.SetActive(false);
                 GameManager.instance.Continue();
-                Cursor.lockState = CursorLockMode.Locked; // 커서 고정
-                Cursor.visible = false; // 커서 숨기기
             }
         }
-    }
 
-    public void ShowInteractionUI()
-    {
-        interactionUI.SetActive(true);
-    }
-
-    public void HideInteractionUI()
-    {
-        interactionUI.SetActive(false);
+        // 플레이어 UI 켜기/끄기
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            if (!playerUI.activeSelf)
+            {
+                playerUI.SetActive(true);
+                GameManager.instance.Pause();
+            }
+            else
+            {
+                playerUI.SetActive(false);
+                GameManager.instance.Continue();
+            }
+        }
     }
 
     // 무기 이미지 변경 함수
     public void ChangeWeaponImg(int equipWeaponId, int weaponId)
     {
         if (weaponId == -1)
+        {
             equipWeaponImgs[equipWeaponId].sprite = null;
+            equipWeaponImgs[equipWeaponId].color = new Color(0 / 255f, 0 / 255f, 0 / 255f, 150f / 225f);
+        }
         else
+        {
             equipWeaponImgs[equipWeaponId].sprite = weaponImgs[weaponId];
+            equipWeaponImgs[equipWeaponId].color = Color.white;
+        }
     }
 
     // 따라오기 선택 캐릭터 버튼 변경 함수
@@ -139,6 +161,11 @@ public class UIManager : MonoBehaviour
     {
         PlayerController playerController = GameManager.instance.Characters[selectCharacterId].GetComponent<PlayerController>();
 
+        for (int i = 0; i < 3; i++)
+        {
+            keyCardLevelImgs[i].SetActive(playerController.havingKeyCardLevel[i + 1]);
+        }
+
         // 따라오기 선택 캐릭터 버튼 변경
         ResetFollowCharacterBtn(selectCharacterId);
 
@@ -151,8 +178,23 @@ public class UIManager : MonoBehaviour
                 ChangeWeaponImg(i, playerController.equipWeapons[i].GetComponent<Weapon>().weaponId);
         }
 
+        Color characterColor = Color.gray;
+        switch (selectCharacterId)
+        {
+            case 0:
+                ColorUtility.TryParseHtmlString("#FFDE90", out characterColor);
+                break;
+            case 1:
+                ColorUtility.TryParseHtmlString("#A87BBE", out characterColor);
+                break;
+            case 2:
+                ColorUtility.TryParseHtmlString("#768BBE", out characterColor);
+                break;
+        }
+        characterProfileImg.color = characterColor;
+
         characterName.text = playerController.gameObject.name; // 캐릭터 이름 설정
-        SetHpBar(playerController.CurHp / playerController.MaxHp); // 체력바 설정
+        SetHpBar(playerController.CurHp, playerController.MaxHp); // 체력바 설정
 
         // 초능력 쿨타임 변경
         // 초능력 쿨타임 이미지 바꾸기 코드 추가
@@ -165,8 +207,33 @@ public class UIManager : MonoBehaviour
         durationRemainTimeText.text = "";
     }
 
-    public void SetHpBar(float value)
+    public void SetHpBar(float curHp, float maxHp)
     {
-        hpBar.value = value;
+        if (curHp <= 0)
+        {
+            hpBar.value = 0;
+            hpTxt.text = "0 / " + maxHp.ToString();
+        }
+        else
+        {
+            hpBar.value = curHp / maxHp;
+            hpTxt.text = curHp.ToString() + " / " + maxHp.ToString();
+        }
+    }
+
+    public void ShowGuide(string content)
+    {
+        guideUI.SetActive(true);
+        guideText.text = content;
+
+        curGuideCoroutine = GuideCoroutine();
+        StartCoroutine(curGuideCoroutine);
+    }
+
+    IEnumerator GuideCoroutine()
+    {
+        yield return new WaitForSeconds(3f);
+        guideUI.SetActive(false);
+        curGuideCoroutine = null;
     }
 }

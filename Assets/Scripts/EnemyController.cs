@@ -13,7 +13,6 @@ public class EnemyController : MonoBehaviour
     public Animator anim;
     public CapsuleCollider col;
     public List<Transform> targets; // 타겟 = 플레이어들
-    public Transform hpBarPos;
     public Canvas canvas;
     public GameObject enemyWeapon;
     public GameObject enemyPatrolPoints; // 순찰 경로 포인트 저장된 오브젝트
@@ -49,7 +48,6 @@ public class EnemyController : MonoBehaviour
 
     void Start()
     {
-        // hpBar = Instantiate(UIManager.instance.hpBarPrefab, canvas.transform);
         patrolPoints = enemyPatrolPoints.GetComponent<ShowPatrolPath>().patrolPoints; // 순찰 지점 배열 가져오기
         transform.position = patrolPoints[0].position; // 처음 순찰 지점으로 위치 초기화
     }
@@ -245,7 +243,7 @@ public class EnemyController : MonoBehaviour
                 {
                     Debug.Log("~~~ " + closestPlayer);
                     attackTimer = 0f;
-                    // 1초마다 가장 가까운 플레이어 공격
+                    // 1.5초마다 가장 가까운 플레이어 공격
                     Attack(closestPlayer);
                 }
             }

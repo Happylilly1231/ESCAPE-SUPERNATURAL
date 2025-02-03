@@ -1,13 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 
 public class CloneController : MonoBehaviour
 {
     public Animator anim; // 분신 애니메이터
     public GameObject[] weapons; // 무기 배열
     public GameObject cloningAbilityCharacter; // 분신술 캐릭터
+
+    public Canvas canvas;
+
+    // 체력바
+    public Slider hpBar;
+    public TextMeshProUGUI hpTxt;
 
     NavMeshAgent nav;
     Vector2 moveVec;
@@ -30,6 +38,7 @@ public class CloneController : MonoBehaviour
     void Awake()
     {
         nav = GetComponent<NavMeshAgent>();
+        nav.isStopped = true;
     }
 
     // 분신을 생성할 때(분신이 활성화될 때) 실행되는 함수
@@ -78,6 +87,10 @@ public class CloneController : MonoBehaviour
 
     void Update()
     {
+        // 체력바 따라다니고 플레이어 화면 바라보게 하기
+        canvas.gameObject.SetActive(true);
+        canvas.transform.LookAt(canvas.transform.position + GameManager.instance.mainCamera.transform.rotation * Vector3.forward, GameManager.instance.mainCamera.transform.rotation * Vector3.up);
+
         if (!isCurFollow && IsFollow) // 현재 따라가고 있지 않고, 따라오도록 선택했을 때(1번만 실행되기 위해 이렇게 조건 설정)
         {
             isCurFollow = true; // 현재 따라가고 있는 것으로 변경
@@ -190,9 +203,9 @@ public class CloneController : MonoBehaviour
 
                 if (closestEnemy != null) // 가장 가까운 적이 존재한다면
                 {
-                    // 1초마다 가장 가까운 적 공격
+                    // 0.5초마다 가장 가까운 적 공격
                     Attack(closestEnemy);
-                    float curTime = 1.5f;
+                    float curTime = 0.5f;
                     while (curTime > 0)
                     {
                         curTime -= Time.deltaTime;
@@ -220,12 +233,16 @@ public class CloneController : MonoBehaviour
         if (curHp - amount <= 0)
         {
             curHp = 0;
+            hpBar.value = 0;
+            hpTxt.text = "0 / " + maxHp.ToString();
             Debug.Log("분신이 죽었습니다.");
-            Destroy(gameObject);
+            gameObject.SetActive(false);
         }
         else
         {
             curHp -= amount;
+            hpBar.value = curHp / maxHp;
+            hpTxt.text = curHp.ToString() + " / " + maxHp.ToString();
         }
     }
 

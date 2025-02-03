@@ -90,7 +90,7 @@ GameObject:
   - component: {fileID: 1582401021028820588}
   m_Layer: 7
   m_Name: Inner Walls
-  m_TagString: Untagged
+  m_TagString: InnerWall
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -155,8 +155,8 @@ Transform:
   - {fileID: 5741924499220792370}
   - {fileID: 1287554938365595939}
   - {fileID: 7920776329915073958}
-  - {fileID: 5591547610224371941}
   - {fileID: 394813874214216645}
+  - {fileID: 5591547610224371941}
   - {fileID: 3652431689516167848}
   - {fileID: 2943827618154221914}
   - {fileID: 6171748271621266046}
@@ -1466,7 +1466,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 135282, guid: 73d3182f2ceb62f48b8ab3173dc89e20, type: 3}
       propertyPath: m_TagString
-      value: CanPhasing
+      value: InnerWall
       objectReference: {fileID: 0}
     - target: {fileID: 149378, guid: 73d3182f2ceb62f48b8ab3173dc89e20, type: 3}
       propertyPath: m_Layer
@@ -2074,7 +2074,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 135282, guid: 73d3182f2ceb62f48b8ab3173dc89e20, type: 3}
       propertyPath: m_TagString
-      value: CanPhasing
+      value: InnerWall
       objectReference: {fileID: 0}
     - target: {fileID: 149378, guid: 73d3182f2ceb62f48b8ab3173dc89e20, type: 3}
       propertyPath: m_Layer

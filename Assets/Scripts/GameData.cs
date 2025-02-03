@@ -5,6 +5,7 @@ using UnityEngine;
 [System.Serializable]
 public class GameData
 {
+    public bool haveToShowTutorial;
     public int currentStageId;
     public List<List<GameObject>> characterEquipWeapons;
     public List<List<int>> characterEquipWeaponCurBulletCnts;
@@ -12,6 +13,7 @@ public class GameData
 
     public GameData()
     {
+        haveToShowTutorial = true;
         currentStageId = 1;
         characterEquipWeapons = new List<List<GameObject>>();
         characterEquipWeaponCurBulletCnts = new List<List<int>>();

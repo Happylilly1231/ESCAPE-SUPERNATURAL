@@ -16,6 +16,8 @@ TagManager:
   - NextStagePoint
   - Machine
   - CanPassTeleport
+  - InnerWall
+  - Clone
   layers:
   - Default
   - TransparentFX
@@ -28,8 +30,8 @@ TagManager:
   - Player
   - Enemy
   - InvisibleMap
-  - 
-  - 
+  - InteractiveMark
+  - CanTeleport
   - 
   - 
   - 

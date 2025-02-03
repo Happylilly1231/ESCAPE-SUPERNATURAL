@@ -6,6 +6,10 @@ using UnityEngine;
 public interface ISupernatural
 {
     bool CanUIUpdate { get; set; }
+    float SupernaturalCoolDown { get; set; }
+    float CooldownRemainTime { get; set; }
+    bool IsSupernaturalReady { get; set; }
+
 
     void Activate(); // 초능력 사용
 

@@ -20,16 +20,19 @@ public class CameraController : MonoBehaviour
 
     void Update()
     {
-        // 마우스 드래그로 회전 조작
-        if (Time.timeScale == 1f)
+        if (!GameManager.instance.isAllowOnlyUIInput)
         {
-            currentY -= Input.GetAxis("Mouse Y") * rotationSpeed;
-            currentY = Mathf.Clamp(currentY, minVerticalAngle, maxVerticalAngle); // 각도 제한
+            // 마우스 드래그로 회전 조작
+            if (Time.timeScale == 1f)
+            {
+                currentY -= Input.GetAxis("Mouse Y") * rotationSpeed;
+                currentY = Mathf.Clamp(currentY, minVerticalAngle, maxVerticalAngle); // 각도 제한
 
-            // 마우스 휠로 줌 조작
-            float scroll = Input.GetAxis("Mouse ScrollWheel");
-            distance -= scroll * zoomSpeed;
-            distance = Mathf.Clamp(distance, minDistance, maxDistance); // 줌 범위 제한
+                // 마우스 휠로 줌 조작
+                float scroll = Input.GetAxis("Mouse ScrollWheel");
+                distance -= scroll * zoomSpeed;
+                distance = Mathf.Clamp(distance, minDistance, maxDistance); // 줌 범위 제한
+            }
         }
     }
 

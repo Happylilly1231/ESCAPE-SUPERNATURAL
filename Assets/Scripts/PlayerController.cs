@@ -1,9 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 
 //CLASS FOR HANDLING PLAYER INPUTS
 public class InputSent
@@ -38,6 +40,7 @@ public class PlayerController : MonoBehaviour
 {
     public Animator anim;
     public CapsuleCollider col; //CHARACTER COLLIDER WITH DEFAULT VALUES (DEFAULT = STAND UP)
+    public CapsuleCollider zeroFrictionCol;
     public float jumpForce = 5f;
     public Transform bottomTransform;
     public GameObject interactionUI; // 상호작용 UI
@@ -72,17 +75,23 @@ public class PlayerController : MonoBehaviour
     public GameObject[] weapons; // 무기 배열
     public GameObject[] equipWeapons; // 장착 무기 배열(주무기 : 0, 1 / 보조무기 : 2) ###저장 필요###
 
-    public float supernaturalCoolDown; // 초능력 쿨타임 (초 단위)
+    // public float supernaturalCoolDown; // 초능력 쿨타임 (초 단위)
 
     public GameObject characterCamera; // 캐릭터 카메라
 
-    bool isSupernaturalReady = true; // 초능력 사용 가능 여부
+    // 체력바
+    public Canvas canvas;
+    public Slider hpBar;
+    public TextMeshProUGUI hpTxt;
+
+
+    // bool isSupernaturalReady = true; // 초능력 사용 가능 여부
 
     Rigidbody rigid;
     InputSent inputs;
     float inputX;
     float inputZ;
-    bool isGrounded;
+    public bool isGrounded;
     float movementInputSpeed = 6f;
 
     // 기본 Collider 정보
@@ -110,7 +119,7 @@ public class PlayerController : MonoBehaviour
 
     bool isAiming;
 
-    float cooldownRemainTime;
+    // float cooldownRemainTime;
 
     bool canUIUpdate;
 
@@ -136,10 +145,7 @@ public class PlayerController : MonoBehaviour
         CurHp = MaxHp;
 
         havingKeyCardLevel = new bool[4];
-    }
 
-    void Start()
-    {
         // 커서를 숨기고 화면 중앙에 고정
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -155,7 +161,10 @@ public class PlayerController : MonoBehaviour
         {
             characterCamera.SetActive(false);
         }
+    }
 
+    void Start()
+    {
         // 이전 스테이지에서 들고 온 장착 무기가 있으면 장착
         for (int i = 0; i < 3; i++)
         {
@@ -182,10 +191,14 @@ public class PlayerController : MonoBehaviour
                 isPlayingCharacter = true;
                 supernatural.CanUIUpdate = true;
                 canUIUpdate = true;
+                canvas.gameObject.SetActive(false);
             }
 
-            // 입력 받기
-            GetInputs();
+            if (!GameManager.instance.isAllowOnlyUIInput)
+            {
+                // 입력 받기
+                GetInputs();
+            }
 
             ChangeColliderSize();
 
@@ -196,10 +209,26 @@ public class PlayerController : MonoBehaviour
         {
             if (isPlayingCharacter)
             {
+                // nav.isStopped = false;
+                // inputX = 0;
+                // inputZ = 0;
+
+                for (int i = 0; i < 3; i++)
+                {
+                    if (i != characterId)
+                    {
+                        Debug.Log("***추적 모드 해제" + i);
+                        PlayerController playerController = GameManager.instance.Characters[i].GetComponent<PlayerController>();
+                        playerController.targetCharacter = null;
+                        UIManager.instance.isFollowImgs[i].SetActive(false);
+                    }
+                }
+
                 nav.enabled = true;
                 isPlayingCharacter = false;
                 supernatural.Deactivate();
                 canUIUpdate = false;
+                canvas.gameObject.SetActive(true);
             }
 
             // 따라갈 캐릭터가 있다면 추적
@@ -224,6 +253,16 @@ public class PlayerController : MonoBehaviour
                     SetAnimMoveVec();
                 }
             }
+            else
+            {
+                nav.isStopped = true;
+                anim.SetBool("Moving", false);
+                inputX = 0;
+                inputZ = 0;
+            }
+
+            // 체력바 따라다니고 플레이어 화면 바라보게 하기
+            canvas.transform.LookAt(canvas.transform.position + GameManager.instance.mainCamera.transform.rotation * Vector3.forward, GameManager.instance.mainCamera.transform.rotation * Vector3.up);
         }
 
         // 캐릭터 움직임 제어
@@ -337,10 +376,10 @@ public class PlayerController : MonoBehaviour
         }
 
         // 초능력
-        if (Input.GetKeyDown(KeyCode.R) && isSupernaturalReady)
+        if (Input.GetKeyDown(KeyCode.R) && supernatural.IsSupernaturalReady)
         {
             supernatural.Activate();
-            StartCoroutine(UpdateSupernaturalCooldown()); // 쿨타임 업데이트 시작
+            // StartCoroutine(UpdateSupernaturalCooldown()); // 쿨타임 업데이트 시작
         }
 
         // 첫번째 캐릭터 따라오게 하기
@@ -390,28 +429,28 @@ public class PlayerController : MonoBehaviour
         // }
     }
 
-    // 초능력 쿨타임 업데이트 함수
-    IEnumerator UpdateSupernaturalCooldown()
-    {
-        isSupernaturalReady = false;
+    // // 초능력 쿨타임 업데이트 함수
+    // IEnumerator UpdateSupernaturalCooldown()
+    // {
+    //     isSupernaturalReady = false;
 
-        cooldownRemainTime = supernaturalCoolDown;
-        while (cooldownRemainTime > 0)
-        {
-            cooldownRemainTime -= Time.deltaTime;
+    //     cooldownRemainTime = supernaturalCoolDown;
+    //     while (cooldownRemainTime > 0)
+    //     {
+    //         cooldownRemainTime -= Time.deltaTime;
 
-            if (canUIUpdate)
-            {
-                UIManager.instance.cooldownDisableImg.fillAmount = cooldownRemainTime / supernaturalCoolDown;
-                UIManager.instance.cooldownRemainTimeText.text = cooldownRemainTime.ToString("F1") + "s";
-            }
-            yield return null;
-        }
-        if (canUIUpdate)
-            UIManager.instance.cooldownRemainTimeText.text = "";
+    //         if (canUIUpdate)
+    //         {
+    //             UIManager.instance.cooldownDisableImg.fillAmount = cooldownRemainTime / supernaturalCoolDown;
+    //             UIManager.instance.cooldownRemainTimeText.text = cooldownRemainTime.ToString("F1") + "s";
+    //         }
+    //         yield return null;
+    //     }
+    //     if (canUIUpdate)
+    //         UIManager.instance.cooldownRemainTimeText.text = "";
 
-        isSupernaturalReady = true;
-    }
+    //     isSupernaturalReady = true;
+    // }
 
     void ControlCharacter()
     {
@@ -499,6 +538,15 @@ public class PlayerController : MonoBehaviour
         {
             Weapon weapon = equipWeapons[selectWeaponId].GetComponent<Weapon>();
 
+            if (!UIManager.instance.bulletCntUI.activeSelf && canUIUpdate)
+                UIManager.instance.bulletCntUI.SetActive(true);
+
+            // 총알 개수 UI에 표시 업데이트
+            if (canUIUpdate)
+            {
+                UIManager.instance.bulletCntTxt.text = weapon.curBulletCnt.ToString() + " / " + weapon.maxBulletCnt.ToString();
+            }
+
             // 총 각도 변경
             bool isPlayingFireAnimation = anim.GetCurrentAnimatorStateInfo(0).IsName("Fire");
             bool isDoingFireTranstion = anim.GetAnimatorTransitionInfo(0).IsName("Fire -> Idle") || anim.GetAnimatorTransitionInfo(0).IsName("Idle -> Fire");
@@ -550,6 +598,11 @@ public class PlayerController : MonoBehaviour
                     // GameManager.instance.mainCamera.transform.position -= transform.forward * 1f;
                 }
             }
+        }
+        else
+        {
+            if (UIManager.instance.bulletCntUI.activeSelf && canUIUpdate)
+                UIManager.instance.bulletCntUI.SetActive(false);
         }
     }
 
@@ -658,6 +711,17 @@ public class PlayerController : MonoBehaviour
                 {
                     researcherController.StealKeyCard(gameObject);
                     havingKeyCardLevel[researcherController.keyCardLevel] = true;
+
+                    if (canUIUpdate)
+                    {
+                        UIManager.instance.ShowGuide(researcherController.keyCardLevel.ToString() + "급 카드키를 획득했습니다.");
+                        UIManager.instance.keyCardLevelImgs[researcherController.keyCardLevel - 1].SetActive(true);
+                    }
+
+                    if (researcherController.keyCardLevel == 1)
+                    {
+                        QuestManager.instance.QuestClear(1, 0); // 스테이지 1 첫번째 퀘스트 완료
+                    }
                 }
             }
             else if (nearObj.tag == "Machine")
@@ -706,13 +770,16 @@ public class PlayerController : MonoBehaviour
         {
             Debug.Log("무기 장착 완료!");
             equipWeapons[equipId] = weapons[weaponId];
-            equipWeapons[equipId].GetComponent<Weapon>().curBulletCnt = item.curBulletCnt;
+            Weapon weapon = equipWeapons[equipId].GetComponent<Weapon>();
+            weapon.curBulletCnt = item.curBulletCnt;
             UIManager.instance.ChangeWeaponImg(equipId, weaponId);
+            UIManager.instance.bulletCntTxt.text = item.curBulletCnt.ToString() + " / " + weapon.maxBulletCnt.ToString();
             Destroy(weaponObj); // 입수한 무기 아이템 파괴
         }
         else // 무기 장착 실패
         {
             Debug.Log("무기를 더 장착할 수 없습니다!");
+            UIManager.instance.ShowGuide("무기를 더 장착할 수 없습니다!");
         }
     }
 
@@ -730,6 +797,8 @@ public class PlayerController : MonoBehaviour
 
             if (equipWeapons[selectWeaponId] != null && curWeaponId != selectWeaponId) // 선택하려는 무기를 가지고 있고, 선택이 바뀔 때만
             {
+                // UIManager.instance.bulletCntUI.SetActive(true);
+
                 equipWeapons[selectWeaponId].SetActive(true); // 그 무기 선택(활성화)
                 curWeaponId = selectWeaponId; // 현재 선택된 무기 변경
                 isHoldingWeapon = true; // 현재 총 들고 있음
@@ -739,6 +808,7 @@ public class PlayerController : MonoBehaviour
         {
             if (curWeaponId != -1) // 현재 선택한 무기가 있는 경우
             {
+                // UIManager.instance.bulletCntUI.SetActive(false);
                 equipWeapons[curWeaponId].SetActive(false); // 그 무기 선택 해제(비활성화)
                 curWeaponId = -1; // 현재 선택된 무기 없음
                 isHoldingWeapon = false; // 현재 무기 들고 있지 않음
@@ -854,7 +924,8 @@ public class PlayerController : MonoBehaviour
             nearObj = other.gameObject;
             if (other.tag == "Machine")
             {
-                other.gameObject.GetComponent<DocumentCollectObject>().isExists[characterId] = true;
+                DocumentCollectObject documentCollectObject = other.gameObject.GetComponent<DocumentCollectObject>();
+                documentCollectObject.Exist(characterId, canUIUpdate);
             }
         }
 
@@ -878,7 +949,9 @@ public class PlayerController : MonoBehaviour
         if (CurHp - amount <= 0)
         {
             CurHp = 0;
-            UIManager.instance.SetHpBar(0);
+            UIManager.instance.SetHpBar(curHp, maxHp);
+            hpBar.value = 0;
+            hpTxt.text = "0 / " + maxHp.ToString();
             Debug.Log(gameObject.name + "이(가) 죽었습니다.");
             // Destroy(gameObject);
             GameManager.instance.GameOver(); // 죽었으니 게임 오버
@@ -886,7 +959,9 @@ public class PlayerController : MonoBehaviour
         else
         {
             CurHp -= amount;
-            UIManager.instance.SetHpBar(CurHp / MaxHp);
+            UIManager.instance.SetHpBar(curHp, maxHp);
+            hpBar.value = curHp / maxHp;
+            hpTxt.text = curHp.ToString() + " / " + maxHp.ToString();
         }
     }
 }

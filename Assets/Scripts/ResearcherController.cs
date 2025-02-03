@@ -81,8 +81,11 @@ public class ResearcherController : MonoBehaviour
 
             float angleToTarget = Vector3.Angle(transform.forward, dirToTarget); // 앞을 바라보는 방향 벡터와 타겟과 적 간의 방향 벡터 사이의 각도 계산
 
-            if (!(angleToTarget < fovAngle / 2f && dirToTarget.magnitude <= sightDistance) && hit.gameObject.GetComponent<PlayerController>().isWalking) // 플레이어가 시야 밖에 있는데, 천천히 걸어올 때
-                continue;
+            if (hit.gameObject.tag == "Player")
+            {
+                if (!(angleToTarget < fovAngle / 2f && dirToTarget.magnitude <= sightDistance) && hit.gameObject.GetComponent<PlayerController>().isWalking) // 플레이어가 시야 밖에 있는데, 천천히 걸어올 때
+                    continue;
+            }
 
             if ((angleToTarget < fovAngle / 2f && dirToTarget.magnitude <= sightDistance) || dirToTarget.magnitude <= detectDistance) // 타겟이 추적 조건에 맞는지 비교(각도는 시야 각의 절반과 비교해야 함)
             {

@@ -8,6 +8,7 @@ public class MainMenuUIManager : MonoBehaviour
 {
     public Button continueBtn; // 이어하기 버튼
     public Button newGameBtn; // 새 게임 버튼
+    public Button gameExitBtn; // 게임 종료 버튼
     public TextMeshProUGUI curStageTxt; // 스테이지 텍스트
 
     void Start()
@@ -19,7 +20,8 @@ public class MainMenuUIManager : MonoBehaviour
             continueBtn.interactable = true;
 
         continueBtn.onClick.AddListener(GameManager.instance.GameStart); // 이어 하기 버튼 함수 지정(현재 저장된 스테이지에서 시작)
-        newGameBtn.onClick.AddListener(GameManager.instance.newGameStart); // 새 게임 버튼 함수 지정(현재 저장된 스테이지를 1로 초기화)
+        newGameBtn.onClick.AddListener(GameManager.instance.NewGameStart); // 새 게임 버튼 함수 지정(현재 저장된 스테이지를 1로 초기화)
+        gameExitBtn.onClick.AddListener(GameManager.instance.GameExit);
 
         string stageTxt = "";
         switch (GameManager.instance.curStageId)

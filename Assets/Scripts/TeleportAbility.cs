@@ -14,6 +14,13 @@ public class TeleportAbility : MonoBehaviour, ISupernatural
     float canTeleportTogetherDistance = 3f;
 
     public bool CanUIUpdate { get => canUIUpdate; set => canUIUpdate = value; }
+    public float SupernaturalCoolDown { get => supernaturalCoolDown; set => supernaturalCoolDown = value; }
+    public float CooldownRemainTime { get => cooldownRemainTime; set => cooldownRemainTime = value; }
+    public bool IsSupernaturalReady { get => isSupernaturalReady; set => isSupernaturalReady = value; }
+
+    float supernaturalCoolDown = 5f; // 초능력 쿨타임 (초 단위)
+    float cooldownRemainTime;
+    bool isSupernaturalReady = true; // 초능력 사용 가능 여부
 
     void Start()
     {
@@ -50,28 +57,41 @@ public class TeleportAbility : MonoBehaviour, ISupernatural
             }
             teleportPosCircle.SetActive(true);
 
-            // 위치 조정
-            Ray ray = GameManager.instance.mainCamera.ScreenPointToRay(Input.mousePosition); // 마우스 방향으로 화면에서 레이 쏘기
-            if (Physics.Raycast(ray, out RaycastHit hit, limitDistance, GameManager.instance.mapLayerMask)) // 맵 레이어만 검출하고 제한 거리 내에서만 가능
+            if (!GameManager.instance.isAllowOnlyUIInput)
             {
-                Debug.Log("hit.collider.gameObject: " + hit.collider.gameObject);
-                teleportPosCircle.transform.position = hit.point; // 충돌 지점에 원 표시
-            }
-
-            // T키 -> 위치 확정 후 순간 이동
-            if (Input.GetKeyDown(KeyCode.T))
-            {
-                transform.position = teleportPosCircle.transform.position; // 확정한 위치로 순간 이동
-                if (anotherTeleportCharacter != null)
+                // 위치 조정
+                Ray ray = GameManager.instance.mainCamera.ScreenPointToRay(Input.mousePosition); // 마우스 방향으로 화면에서 레이 쏘기
+                if (Physics.Raycast(ray, out RaycastHit hit, limitDistance, LayerMask.GetMask("Map") | LayerMask.GetMask("InvisibleMap"))) // 맵 레이어만 검출하고 제한 거리 내에서만 가능
                 {
-                    anotherTeleportCharacter.GetComponent<PlayerController>().nav.enabled = false;
-                    anotherTeleportCharacter.transform.position = transform.position + transform.forward * 2f;
-                    Debug.Log("@@@ " + anotherTeleportCharacter.transform.position);
-                    anotherTeleportCharacter.GetComponent<PlayerController>().nav.enabled = true;
+                    Debug.Log("hit.collider.gameObject: " + hit.collider.gameObject);
+                    teleportPosCircle.transform.position = hit.point; // 충돌 지점에 원 표시
                 }
-                // characterFindCollider.enabled = false; // 캐릭터 찾기 트리거 콜라이더 컴포넌트 비활성화
-                teleportPosCircle.SetActive(false);
-                break; // 반복문 종료
+
+                // T키 -> 위치 확정 후 순간 이동
+                if (Input.GetKeyDown(KeyCode.T))
+                {
+                    if (!teleportPosCircle.GetComponent<CheckTargetPos>().isMoveOkay)
+                    {
+                        UIManager.instance.ShowGuide("해당 위치가 순간이동하기에 불완전합니다.");
+                    }
+                    else
+                    {
+                        transform.position = teleportPosCircle.transform.position; // 확정한 위치로 순간 이동
+                        if (anotherTeleportCharacter != null)
+                        {
+                            anotherTeleportCharacter.GetComponent<PlayerController>().nav.enabled = false;
+                            anotherTeleportCharacter.transform.position = transform.position + transform.forward * 2f;
+                            Debug.Log("@@@ " + anotherTeleportCharacter.transform.position);
+                            anotherTeleportCharacter.GetComponent<PlayerController>().nav.enabled = true;
+                        }
+                        // characterFindCollider.enabled = false; // 캐릭터 찾기 트리거 콜라이더 컴포넌트 비활성화
+                        teleportPosCircle.SetActive(false);
+
+                        StartCoroutine(UpdateSupernaturalCooldown()); // 쿨타임 업데이트 시작
+
+                        break; // 반복문 종료
+                    }
+                }
             }
 
             yield return null;
@@ -111,5 +131,28 @@ public class TeleportAbility : MonoBehaviour, ISupernatural
     {
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireSphere(transform.position, canTeleportTogetherDistance);
+    }
+
+    // 초능력 쿨타임 업데이트 함수
+    IEnumerator UpdateSupernaturalCooldown()
+    {
+        IsSupernaturalReady = false;
+
+        CooldownRemainTime = SupernaturalCoolDown;
+        while (CooldownRemainTime > 0)
+        {
+            CooldownRemainTime -= Time.deltaTime;
+
+            if (canUIUpdate)
+            {
+                UIManager.instance.cooldownDisableImg.fillAmount = CooldownRemainTime / SupernaturalCoolDown;
+                UIManager.instance.cooldownRemainTimeText.text = CooldownRemainTime.ToString("F1") + "s";
+            }
+            yield return null;
+        }
+        if (canUIUpdate)
+            UIManager.instance.cooldownRemainTimeText.text = "";
+
+        IsSupernaturalReady = true;
     }
 }

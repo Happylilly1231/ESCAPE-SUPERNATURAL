@@ -23,10 +23,10 @@ public class GameManager : MonoBehaviour
     bool[] isCharactersClear; // 캐릭터가 현재 스테이지를 클리어했는지 여부
     public int curStageId; // 현재 스테이지 정보 (B3 : 1, B2: 2, B1: 3, 지상층: 4); ###저장 필요###
 
+    public bool isAllowOnlyUIInput;
+
     public GameObject[] Characters { get => characters; set => characters = value; }
     public GameObject[] CharacterCameras { get => characterCameras; set => characterCameras = value; }
-
-    public bool[] havingDocuments; // 문서 획득 여부
 
     void Awake()
     {
@@ -36,7 +36,7 @@ public class GameManager : MonoBehaviour
             DontDestroyOnLoad(gameObject);
 
             // 레이어 마스크 할당
-            mapLayerMask = LayerMask.GetMask("Map") | LayerMask.GetMask("InvisibleMap");
+            mapLayerMask = LayerMask.GetMask("Map") | LayerMask.GetMask("InvisibleMap") | LayerMask.GetMask("CanTeleport");
             playerLayerMask = LayerMask.GetMask("Player");
             enemyLayerMask = LayerMask.GetMask("Enemy");
 
@@ -44,7 +44,8 @@ public class GameManager : MonoBehaviour
             Characters = new GameObject[3];
             CharacterCameras = new GameObject[3];
             isCharactersClear = new bool[3];
-            havingDocuments = new bool[3];
+
+            isAllowOnlyUIInput = false;
         }
         else
         {
@@ -56,18 +57,6 @@ public class GameManager : MonoBehaviour
     {
         curStageId = DataManager.instance.data.currentStageId; // 저장된 스테이지로 초기화
     }
-
-    // void Start()
-    // {
-    //     if (characterCameras[selectCharacterId] != null)
-    //     {
-    //         characterCameras[0].SetActive(true);
-    //         mainCamera = characterCameras[0].GetComponent<Camera>();
-    //         characterCameras[1].SetActive(false);
-    //         characterCameras[2].SetActive(false);
-    //         UIManager.instance.PlayingCharacterSetting(selectCharacterId);
-    //     }
-    // }
 
     void Update()
     {
@@ -86,11 +75,17 @@ public class GameManager : MonoBehaviour
     public void Pause()
     {
         Time.timeScale = 0f;
+        Cursor.lockState = CursorLockMode.None; // 커서 해제
+        Cursor.visible = true; // 커서 보이기
+        isAllowOnlyUIInput = true;
     }
 
     public void Continue()
     {
         Time.timeScale = 1f;
+        Cursor.lockState = CursorLockMode.Locked; // 커서 고정
+        Cursor.visible = false; // 커서 숨기기
+        isAllowOnlyUIInput = false;
     }
 
     // 캐릭터가 현재 플레이하고 있는 캐릭터 따라오게 할지 여부 설정하는 함수
@@ -100,11 +95,13 @@ public class GameManager : MonoBehaviour
         {
             Debug.Log("추적 모드로 변경");
             Characters[characterId].GetComponent<PlayerController>().targetCharacter = Characters[selectCharacterId].transform; // 해당 캐릭터가 현재 플레이하고 있는 캐릭터를 따라오도록 함
+            UIManager.instance.isFollowImgs[characterId].SetActive(true);
         }
         else
         {
             Debug.Log("추적 모드 해제");
             Characters[characterId].GetComponent<PlayerController>().targetCharacter = null;
+            UIManager.instance.isFollowImgs[characterId].SetActive(false);
         }
 
     }
@@ -120,7 +117,7 @@ public class GameManager : MonoBehaviour
     }
 
     // 새 게임 시작 함수
-    public void newGameStart()
+    public void NewGameStart()
     {
         Debug.Log("새 게임 시작!");
         curStageId = 1; // 현재 스테이지를 처음 스테이지로 초기화
@@ -154,11 +151,21 @@ public class GameManager : MonoBehaviour
     // 스테이지 클리어 함수
     void StageClear()
     {
-        curStageId += 1; // 다음 스테이지가 현재 스테이지가 됨
+        for (int i = 0; i < QuestManager.instance.isQuestClear.Length; i++)
+        {
+            if (!QuestManager.instance.isQuestClear[i])
+            {
+                Debug.Log("퀘스트를 다 완료하지 않았으므로 클리어를 할 수 없습니다.");
+                return;
+            }
+        }
 
-        // 데이터는 클리어 시 저장(다음 스테이지로 넘어가기 전 현재 스테이지에서의 캐릭터 정보가 필요함, 클리어 화면으로 넘어가면 사라짐)
-        GameDataUpdate(); // 데이터 갱신
-        DataManager.instance.SaveGameData(); // 데이터 저장
+        // 현재 다음 스테이지 저장 안되게 지움!!!
+        // curStageId += 1; // 다음 스테이지가 현재 스테이지가 됨
+
+        // // 데이터는 클리어 시 저장(다음 스테이지로 넘어가기 전 현재 스테이지에서의 캐릭터 정보가 필요함, 클리어 화면으로 넘어가면 사라짐)
+        // GameDataUpdate(); // 데이터 갱신
+        // DataManager.instance.SaveGameData(); // 데이터 저장
 
         Debug.Log("스테이지 클리어!");
         SceneManager.LoadScene("Clear"); // 클리어 화면으로 전환
@@ -206,7 +213,6 @@ public class GameManager : MonoBehaviour
             characterEquipWeapons = equipWeapons,
             characterEquipWeaponCurBulletCnts = equipWeaponCurBulletCnts,
             characterHavingKeyCardLevels = havingKeyCardLevels
-
         };
     }
 
@@ -214,6 +220,14 @@ public class GameManager : MonoBehaviour
     public void MoveToNextStage()
     {
         Debug.Log("다음 스테이지 : " + curStageId + " (으)로 이동!");
+
+        // 임시 엔딩
+        if (curStageId == 2)
+        {
+            SceneManager.LoadScene("Ending");
+            return;
+        }
+
         GameStart();
     }
 
@@ -221,5 +235,15 @@ public class GameManager : MonoBehaviour
     public void MoveToMainMenu()
     {
         SceneManager.LoadScene("MainMenu");
+    }
+
+    public void GameEnding()
+    {
+        SceneManager.LoadScene("Ending");
+    }
+
+    public void GameExit()
+    {
+        Application.Quit();
     }
 }
