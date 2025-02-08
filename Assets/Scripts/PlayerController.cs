@@ -77,6 +77,9 @@ public class PlayerController : MonoBehaviour
 
     // public float supernaturalCoolDown; // 초능력 쿨타임 (초 단위)
 
+    // 아이템
+    public int[] havingItemIds; // 가지고 있는 아이템 아이디 배열
+
     public GameObject characterCamera; // 캐릭터 카메라
 
     // 체력바
@@ -104,7 +107,7 @@ public class PlayerController : MonoBehaviour
 
     GameObject nearObj;
     int selectWeaponId = -1;
-    int curWeaponId = -1;
+    public int curWeaponId = -1;
 
     bool isPlayingCharacter;
 
@@ -141,6 +144,7 @@ public class PlayerController : MonoBehaviour
         supernatural = GetComponent<ISupernatural>(); // 초능력 인터페이스
 
         equipWeapons = new GameObject[3];
+        havingItemIds = new int[2] { -1, -1 };
 
         nav = GetComponent<NavMeshAgent>();
 
@@ -215,6 +219,7 @@ public class PlayerController : MonoBehaviour
                 // nav.isStopped = false;
                 // inputX = 0;
                 // inputZ = 0;
+                inputs.Clear();
 
                 for (int i = 0; i < 3; i++)
                 {
@@ -371,7 +376,7 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // 인벤토리 현재 클릭된 오브젝트 버리기
+        // 현재 선택된 장착 무기 버리기
         if (Input.GetKeyDown(KeyCode.Q))
         {
             if (curWeaponId != -1)
@@ -384,9 +389,33 @@ public class PlayerController : MonoBehaviour
                 throwWeaponItem.GetComponent<Item>().curBulletCnt = weapon.curBulletCnt;
                 equipWeapons[curWeaponId] = null;
                 UIManager.instance.ChangeWeaponImg(curWeaponId, -1);
+                Color color = Color.black;
+                color.a = 150f / 255f;
+                UIManager.instance.equipWeaponOutlines[curWeaponId].color = color;
                 curWeaponId = -1;
                 selectWeaponId = -1;
                 isHoldingWeapon = false;
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.Alpha6))
+        {
+            if (havingItemIds[0] != -1)
+            {
+                GameObject item = GameManager.instance.items[havingItemIds[0]];
+                Instantiate(item, transform.position + transform.forward * 2f, Quaternion.identity);
+                UIManager.instance.ChangeWeaponImg(havingItemIds[0], -1);
+                havingItemIds[0] = -1;
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.Alpha7))
+        {
+            if (havingItemIds[1] != -1)
+            {
+                GameObject item = GameManager.instance.items[havingItemIds[1]];
+                Instantiate(item, transform.position + transform.forward * 2f, Quaternion.identity);
+                UIManager.instance.ChangeWeaponImg(havingItemIds[1], -1);
+                havingItemIds[1] = -1;
             }
         }
 
@@ -741,12 +770,50 @@ public class PlayerController : MonoBehaviour
             }
             else if (nearObj.tag == "Machine")
             {
-                DocumentCollectObject documentCollectObject = nearObj.GetComponent<DocumentCollectObject>();
-                if (documentCollectObject.interactiveCharacterId == characterId || documentCollectObject.interactiveCharacterId == -1)
+                InteractiveObject interactiveObject = nearObj.GetComponent<InteractiveObject>();
+                if (interactiveObject.interactiveCharacterId == characterId || interactiveObject.interactiveCharacterId == -1)
                 {
-                    documentCollectObject.Activate();
+                    interactiveObject.Activate(this);
                 }
             }
+            else if (nearObj.tag == "Item") // 아이템
+            {
+                PickUpItem(nearObj); // 아이템 줍기
+            }
+        }
+    }
+
+    public void PickUpItem(GameObject itemObj)
+    {
+        Item item = itemObj.GetComponent<Item>();
+        int itemId = item.id; // 아이템 종류 식별
+        if (itemId == 0 && !GameManager.instance.isFirstPickUpTimeBomb) // 아이템이 시한 폭탄이고, 처음 주울 때
+        {
+            GameManager.instance.isFirstPickUpTimeBomb = true;
+            QuestManager.instance.QuestClear(2, 1); // 스테이지 2의 첫번째 퀘스트 완료
+        }
+
+        int havingItemId = -1;
+        for (int i = 0; i < havingItemIds.Length; i++)
+        {
+            if (havingItemIds[i] == -1)
+            {
+                havingItemId = i;
+                break;
+            }
+        }
+
+        if (havingItemId != -1)
+        {
+            Debug.Log("아이템 줍기 완료!");
+            havingItemIds[havingItemId] = itemId;
+            UIManager.instance.ChangeItemImg(havingItemId, itemId);
+            Destroy(itemObj); // 입수한 아이템 파괴
+        }
+        else
+        {
+            Debug.Log("아이템을 더 주울 수 없습니다!");
+            UIManager.instance.ShowGuide("아이템을 더 주울 수 없습니다!", true);
         }
     }
 
@@ -814,6 +881,9 @@ public class PlayerController : MonoBehaviour
             if (curWeaponId != -1) // 현재 선택한 무기가 있는 경우
             {
                 equipWeapons[curWeaponId].SetActive(false); // 그 무기 선택 해제(비활성화)
+                Color color = Color.black;
+                color.a = 150f / 255f;
+                UIManager.instance.equipWeaponOutlines[curWeaponId].color = color;
                 curWeaponId = -1; // 현재 선택된 무기 없음
                 isHoldingWeapon = false; // 현재 무기 들고 있지 않음
             }
@@ -824,6 +894,9 @@ public class PlayerController : MonoBehaviour
 
                 equipWeapons[selectWeaponId].SetActive(true); // 그 무기 선택(활성화)
                 curWeaponId = selectWeaponId; // 현재 선택된 무기 변경
+                Color color = Color.cyan;
+                color.a = 150f / 255f;
+                UIManager.instance.equipWeaponOutlines[curWeaponId].color = color;
                 isHoldingWeapon = true; // 현재 총 들고 있음
             }
         }
@@ -833,6 +906,9 @@ public class PlayerController : MonoBehaviour
             {
                 // UIManager.instance.bulletCntUI.SetActive(false);
                 equipWeapons[curWeaponId].SetActive(false); // 그 무기 선택 해제(비활성화)
+                Color color = Color.black;
+                color.a = 150f / 255f;
+                UIManager.instance.equipWeaponOutlines[curWeaponId].color = color;
                 curWeaponId = -1; // 현재 선택된 무기 없음
                 isHoldingWeapon = false; // 현재 무기 들고 있지 않음
             }
@@ -933,10 +1009,7 @@ public class PlayerController : MonoBehaviour
         if (other.tag == "NextStagePoint") // 다음 층 포인트를 밟으면
         {
             // 스테이지 클리어
-            Debug.Log(gameObject.name + "이(가) 스테이지를 클리어했습니다!");
             GameManager.instance.CharacterClear(characterId);
-
-            gameObject.SetActive(false);
         }
     }
 

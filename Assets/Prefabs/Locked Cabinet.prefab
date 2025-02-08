@@ -70,15 +70,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8618a9605fe3f4b45b5c7c2b70a25400, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  documentCollectObjectType: 1
+  interactiveObjectType: 1
   interactiveCharacterId: 0
   triggerCollider: {fileID: 8344902489673907110}
   documentId: 0
-  computers: []
-  isExists: 
+  setObjects: []
+  canvas: {fileID: 0}
+  sliderBar: {fileID: 0}
+  existObjs: []
   secretPassageGate: {fileID: 0}
   moveAmount: {x: 0, y: 0, z: 0}
   canMoveObstacleCharacterCnt: 0
+  itemId: 0
 --- !u!1 &3335146068336631294
 GameObject:
   m_ObjectHideFlags: 0

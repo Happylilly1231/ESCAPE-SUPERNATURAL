@@ -51,6 +51,7 @@ public class QuestManager : MonoBehaviour
             isQuestClear[num] = true;
             quests[num].transform.GetChild(0).GetComponent<Image>().sprite = checkImg;
             quests[num].transform.GetChild(1).GetComponent<TextMeshProUGUI>().color = Color.green;
+            SoundManager.instance.PlaySFX(3);
         }
     }
 }

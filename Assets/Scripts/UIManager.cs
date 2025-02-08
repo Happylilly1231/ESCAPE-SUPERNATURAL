@@ -15,6 +15,7 @@ public class UIManager : MonoBehaviour
 
     // Main UI
     public Image[] equipWeaponImgs; // 장착 무기 이미지 배열
+    public Image[] equipWeaponOutlines; // 장착 무기 아웃라인 배열
     public Sprite[] weaponImgs; // 무기 스프라이트 배열
     public Image characterProfileImg;
     public TextMeshProUGUI characterName; // 캐릭터 이름
@@ -32,6 +33,9 @@ public class UIManager : MonoBehaviour
     public GameObject researcherTimeAttackUI; // 연구원 카드키 획득 타임어택 쿨타임 이미지
     public Image timeAttackDisableImg; // 연구원 카드키 획득 타임어택 쿨타임 남은 시간 이미지
     public TextMeshProUGUI timeAttackRemainTimeText; // 연구원 카드키 획득 초능력 쿨타임 남은 시간 텍스트
+    public GameObject havingItemUI;
+    public Image[] havingItemImgs; // 가지고 있는 아이템 이미지 배열
+    public Sprite[] itemImgs; // 아이템 스프라이트 배열
 
     // 초능력 쿨타임
     public Image cooldownImg; // 초능력 쿨타임 이미지
@@ -49,6 +53,13 @@ public class UIManager : MonoBehaviour
     public GameObject guideUI; // 가이드 UI
     public TextMeshProUGUI guideText; // 가이드 텍스트
     public IEnumerator curGuideCoroutine;
+
+    public GameObject controlUI;
+    public GameObject soundUI;
+    public Button controlUIBtn;
+    public Button soundUIBtn;
+    public Slider bgmSlider; // BGM 볼륨 슬라이더
+    public Slider sfxSlider; // SFX 볼륨 슬라이더
 
     void Awake()
     {
@@ -78,6 +89,10 @@ public class UIManager : MonoBehaviour
             GameObject cloningAbilityCharacter = GameManager.instance.Characters[1];
             cloneCntBtn[id].onClick.AddListener(() => cloningAbilityCharacter.GetComponent<CloningAbility>().SelectCloneCount(id + 1));
         }
+
+        SoundManager.instance.bgmSlider = bgmSlider;
+        SoundManager.instance.sfxSlider = sfxSlider;
+        SoundManager.instance.Init();
     }
 
     void Update()
@@ -137,13 +152,30 @@ public class UIManager : MonoBehaviour
     {
         if (weaponId == -1)
         {
+            equipWeaponImgs[equipWeaponId].gameObject.SetActive(false);
             equipWeaponImgs[equipWeaponId].sprite = null;
-            equipWeaponImgs[equipWeaponId].color = new Color(0 / 255f, 0 / 255f, 0 / 255f, 150f / 225f);
+            // equipWeaponImgs[equipWeaponId].color = new Color(0 / 255f, 0 / 255f, 0 / 255f, 150f / 225f);
         }
         else
         {
+            equipWeaponImgs[equipWeaponId].gameObject.SetActive(true);
             equipWeaponImgs[equipWeaponId].sprite = weaponImgs[weaponId];
-            equipWeaponImgs[equipWeaponId].color = Color.white;
+            // equipWeaponImgs[equipWeaponId].color = Color.white;
+        }
+    }
+
+    // 아이템 이미지 변경 함수
+    public void ChangeItemImg(int havingItemId, int itemId)
+    {
+        if (itemId == -1)
+        {
+            havingItemImgs[havingItemId].sprite = null;
+            havingItemImgs[havingItemId].color = new Color(0 / 255f, 0 / 255f, 0 / 255f, 150f / 225f);
+        }
+        else
+        {
+            havingItemImgs[havingItemId].sprite = itemImgs[itemId];
+            havingItemImgs[havingItemId].color = Color.white;
         }
     }
 
@@ -175,10 +207,32 @@ public class UIManager : MonoBehaviour
         // 현재 선택한 플레이어의 무기로 이미지 변경
         for (int i = 0; i < 3; i++)
         {
+            Color color = Color.black;
+            color.a = 150f / 255f;
+            equipWeaponOutlines[i].color = color;
+
             if (playerController.equipWeapons[i] == null)
                 ChangeWeaponImg(i, -1);
             else
                 ChangeWeaponImg(i, playerController.equipWeapons[i].GetComponent<Weapon>().weaponId);
+        }
+        if (playerController.curWeaponId != -1)
+        {
+            Color color2 = Color.cyan;
+            color2.a = 150f / 255f;
+            equipWeaponOutlines[playerController.curWeaponId].color = color2;
+        }
+
+        if (havingItemUI != null)
+        {
+            // 현재 선택한 플레이어의 아이템으로 이미지 변경
+            for (int i = 0; i < 2; i++)
+            {
+                if (playerController.havingItemIds[i] == -1)
+                    ChangeItemImg(i, -1);
+                else
+                    ChangeItemImg(i, playerController.havingItemIds[i]);
+            }
         }
 
         Color characterColor = Color.gray;
@@ -245,5 +299,17 @@ public class UIManager : MonoBehaviour
         yield return new WaitForSeconds(3f);
         guideUI.SetActive(false);
         curGuideCoroutine = null;
+    }
+
+    public void ShowControlUI()
+    {
+        soundUI.SetActive(false);
+        controlUI.SetActive(true);
+    }
+
+    public void ShowSoundUI()
+    {
+        soundUI.SetActive(true);
+        controlUI.SetActive(false);
     }
 }

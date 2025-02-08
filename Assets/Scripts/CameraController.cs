@@ -6,15 +6,19 @@ public class CameraController : MonoBehaviour
 {
     public GameObject player; // 카메라가 따라갈 대상
     public float distance = 2f; // 기본 거리
-    public float minDistance = 0.5f; // 최소 줌
+    float minDistance = 0.5f; // 최소 줌
     public float maxDistance = 4f; // 최대 줌
     public float zoomSpeed = 2f; // 줌 속도
 
     public float rotationSpeed = 3f; // 회전 속도
-    public float minVerticalAngle = -10f; // 아래쪽 제한 (바닥이 너무 많이 보이지 않게)
-    public float maxVerticalAngle = 25f; // 위쪽 제한 (천장이 보이지 않도록)
+    float minVerticalAngle = -50f; // 아래쪽 제한 (바닥이 너무 많이 보이지 않게)
+    public float maxVerticalAngle = 50f; // 위쪽 제한 (천장이 보이지 않도록)
 
     public Vector3 cameraOffset = new Vector3(0, 2.6f, 0); // 카메라 위치 보정값
+
+    // public Vector3 minimumCameraPos;
+    // public PlayerController playerController;
+    // public bool isObstacleDetected;
 
     float currentY = 10f; // 초기 각도 (약간 내려다보는 시점)
 
@@ -49,12 +53,13 @@ public class CameraController : MonoBehaviour
         // Raycast로 맵 감지
         if (Physics.Raycast(player.transform.position + cameraOffset, targetPos - (player.transform.position + cameraOffset), out RaycastHit hit, distance, GameManager.instance.mapLayerMask))
         {
+            // isObstacleDetected = true;
+            // transform.position = player.transform.position + minimumCameraPos;
             distance = minDistance;
             targetPos = player.transform.position + cameraOffset + rotation * new Vector3(0, 0, -distance);
         }
 
         transform.position = targetPos;
-
         transform.LookAt(player.transform.position + cameraOffset); // 대상 바라보기
     }
 }

@@ -8,7 +8,7 @@ public class TeleportAbility : MonoBehaviour, ISupernatural
     public GameObject teleportAlonePosCircle; // 혼자 순간이동 목표 위치를 나타내는 원
     public GameObject teleportTogetherPosCircle; // 함께 순간이동 목표 위치를 나타내는 원
     GameObject teleportPosCircle; // 순간이동 목표 위치를 나타내는 원
-    float limitDistance = 10f; // 제한 거리
+    public float limitDistance = 10f; // 제한 거리
     GameObject anotherTeleportCharacter;
     float canTeleportTogetherDistance = 3f;
 
@@ -16,7 +16,7 @@ public class TeleportAbility : MonoBehaviour, ISupernatural
     public float CooldownRemainTime { get => cooldownRemainTime; set => cooldownRemainTime = value; }
     public bool IsSupernaturalReady { get => isSupernaturalReady; set => isSupernaturalReady = value; }
 
-    float supernaturalCoolDown = 5f; // 초능력 쿨타임 (초 단위)
+    float supernaturalCoolDown = 3f; // 초능력 쿨타임 (초 단위)
     float cooldownRemainTime;
     bool isSupernaturalReady = true; // 초능력 사용 가능 여부
 

@@ -18,6 +18,9 @@ public class CloneController : MonoBehaviour
     public TextMeshProUGUI hpTxt;
     public int cloneNum; // 1부터 시작
 
+    public GameObject itemImgUI;
+    public GameObject[] itemImgs; // 아이템 이미지 오브젝트 배열
+
     NavMeshAgent nav;
     Vector2 moveVec;
     float detectDistance = 5f; // 적 탐지 거리(시야각 고려 X)
@@ -30,6 +33,7 @@ public class CloneController : MonoBehaviour
     float stopDistance = 0.1f; // nav가 이동을 멈추는 거리
 
     GameObject holdingWeapon; // 들고 있는 무기(분신술 캐릭터가 가지고 있는 무기 중 앞 순서부터 선택됨)
+    public int[] havingItemIds;
 
     bool isCurFollow; // 현재 분신이 분신술 캐릭터를 따라가고 있는지 여부
     bool isFollow; // 분신이 분신술 캐릭터 따라오기 선택 여부
@@ -58,6 +62,40 @@ public class CloneController : MonoBehaviour
         foreach (GameObject weapon in weapons)
         {
             weapon.SetActive(false);
+        }
+
+        // 무기로 공격
+        PlayerController cloningAbilityCharacterController = cloningAbilityCharacter.GetComponent<PlayerController>();
+        for (int i = 0; i < 3; i++)
+        {
+            if (cloningAbilityCharacterController.equipWeapons[i] != null)
+            {
+                int id = cloningAbilityCharacterController.equipWeapons[i].GetComponent<Weapon>().weaponId;
+                holdingWeapon = weapons[id];
+                holdingWeapon.SetActive(true);
+                break;
+            }
+        }
+
+        havingItemIds = (int[])cloningAbilityCharacterController.havingItemIds.Clone(); // 배열 복사
+        int itemCnt = 0;
+        for (int i = 0; i < havingItemIds.Length; i++)
+        {
+            if (havingItemIds[i] == -1)
+                itemImgs[i].SetActive(false);
+            else
+            {
+                itemImgs[i].SetActive(true);
+                itemCnt++;
+            }
+        }
+        if (itemCnt > 0)
+        {
+            itemImgUI.SetActive(true);
+        }
+        else
+        {
+            itemImgUI.SetActive(false);
         }
 
         StartCoroutine(FindClosestEnemy()); // 주변에 있는 적들 중 가장 가까운 적을 찾는 코루틴 실행
@@ -206,24 +244,27 @@ public class CloneController : MonoBehaviour
 
                 if (closestEnemy != null) // 가장 가까운 적이 존재한다면
                 {
-                    // 0.5초마다 가장 가까운 적 공격
-                    Attack(closestEnemy);
-                    float curTime = 0.5f;
-                    while (curTime > 0)
+                    if (holdingWeapon != null)
                     {
-                        curTime -= Time.deltaTime;
-                        yield return null;
+                        // 0.5초마다 가장 가까운 적 공격
+                        Attack(closestEnemy);
+                        float curTime = 0.5f;
+                        while (curTime > 0)
+                        {
+                            curTime -= Time.deltaTime;
+                            yield return null;
+                        }
                     }
                 }
-                else // 존재하지 않는다면
-                {
-                    if (holdingWeapon != null) // 무기를 들고 있을 때
-                    {
-                        // 무기 넣기
-                        holdingWeapon.SetActive(false); // 들고 있는 무기 비활성화
-                        holdingWeapon = null; // 들고 있는 무기 초기화
-                    }
-                }
+                // else // 존재하지 않는다면
+                // {
+                //     if (holdingWeapon != null) // 무기를 들고 있을 때
+                //     {
+                //         // 무기 넣기
+                //         holdingWeapon.SetActive(false); // 들고 있는 무기 비활성화
+                //         holdingWeapon = null; // 들고 있는 무기 초기화
+                //     }
+                // }
             }
 
             yield return null;
@@ -254,26 +295,13 @@ public class CloneController : MonoBehaviour
     {
         Debug.Log("분신이 적을 공격합니다.");
 
-        PlayerController cloningAbilityCharacterController = cloningAbilityCharacter.GetComponent<PlayerController>();
-
         // 무기로 공격
-        for (int i = 0; i < 3; i++)
+        gameObject.transform.LookAt(enemy.transform);
+        Weapon weapon = holdingWeapon.GetComponent<Weapon>();
+        if (weapon.canFire)
         {
-            if (cloningAbilityCharacterController.equipWeapons[i] != null)
-            {
-                int id = cloningAbilityCharacterController.equipWeapons[i].GetComponent<Weapon>().weaponId;
-                holdingWeapon = weapons[id];
-                holdingWeapon.SetActive(true);
-                gameObject.transform.LookAt(enemy.transform);
-
-                Weapon weapon = holdingWeapon.GetComponent<Weapon>();
-                if (weapon.canFire)
-                {
-                    anim.SetTrigger("Fire");
-                    weapon.Use(gameObject);
-                }
-                break;
-            }
+            anim.SetTrigger("Fire");
+            weapon.Use(gameObject);
         }
     }
 
@@ -281,8 +309,9 @@ public class CloneController : MonoBehaviour
     void OnDisable()
     {
         if (triggerMachine != null)
-            triggerMachine.GetComponent<DocumentCollectObject>().isExists[cloneNum + 2] = false;
+            triggerMachine.GetComponent<InteractiveObject>().existObjs[cloneNum + 2] = null;
         nav.enabled = false; // 사용하지 않으므로 NavMeshAgent 비활성화
+        holdingWeapon = null;
     }
 
     void OnTriggerEnter(Collider other)
@@ -290,9 +319,9 @@ public class CloneController : MonoBehaviour
         if (other.tag == "Machine")
         {
             triggerMachine = other.gameObject;
-            if (other.GetComponent<DocumentCollectObject>().interactiveCharacterId == 1)
+            if (other.GetComponent<InteractiveObject>().interactiveCharacterId == 1)
             {
-                other.GetComponent<DocumentCollectObject>().isExists[cloneNum + 2] = true;
+                other.GetComponent<InteractiveObject>().existObjs[cloneNum + 2] = gameObject;
             }
         }
     }
@@ -302,9 +331,9 @@ public class CloneController : MonoBehaviour
         if (other.tag == "Machine")
         {
             triggerMachine = null;
-            if (other.GetComponent<DocumentCollectObject>().interactiveCharacterId == 1)
+            if (other.GetComponent<InteractiveObject>().interactiveCharacterId == 1)
             {
-                other.GetComponent<DocumentCollectObject>().isExists[cloneNum + 2] = false;
+                other.GetComponent<InteractiveObject>().existObjs[cloneNum + 2] = null;
             }
         }
     }

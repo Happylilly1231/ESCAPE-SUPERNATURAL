@@ -83,13 +83,16 @@ MonoBehaviour:
   - {fileID: 3128967627448904884}
   - {fileID: 9098013477934705277}
   equipWeapons: []
+  havingItemIds: 
   characterCamera: {fileID: 3257236862099975535}
   canvas: {fileID: 681742490177686879}
   hpBar: {fileID: 4216385851100308890}
   hpTxt: {fileID: 4091004469526917316}
   isGrounded: 0
+  curWeaponId: -1
   nav: {fileID: 0}
   targetCharacter: {fileID: 0}
+  canUIUpdate: 0
   havingKeyCardLevel: 
   isWalking: 0
 --- !u!54 &5159389185534731641
@@ -334,6 +337,7 @@ GameObject:
   - component: {fileID: 5801317019435214869}
   - component: {fileID: 754516994720613201}
   - component: {fileID: 8686291196700223524}
+  - component: {fileID: 1413798675162595271}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: Untagged
@@ -422,9 +426,9 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
   m_Size: {x: 0.05, y: 0.05, z: 0.05}
   m_Center: {x: 0, y: 0, z: 0}
@@ -508,13 +512,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 1016937831917408721}
   distance: 2
-  minDistance: 0.5
   maxDistance: 3
   zoomSpeed: 2
   rotationSpeed: 3
-  minVerticalAngle: -10
-  maxVerticalAngle: 25
+  maxVerticalAngle: 50
   cameraOffset: {x: 0, y: 2.6, z: 0}
+--- !u!81 &1413798675162595271
+AudioListener:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3257236862099975535}
+  m_Enabled: 1
 --- !u!1 &3334042668366444271
 GameObject:
   m_ObjectHideFlags: 0

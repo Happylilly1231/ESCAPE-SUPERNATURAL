@@ -19,6 +19,8 @@ TagManager:
   - InnerWall
   - Clone
   - Floor
+  - Item
+  - Ceiling
   layers:
   - Default
   - TransparentFX

@@ -6,10 +6,9 @@ public class Item : MonoBehaviour
 {
     public enum Type
     {
-        Ammo,
-        Document,
         Weapon,
-        Healing,
+        TimeBomb,
+        TimeBombSetter,
     }
 
     public Type type;

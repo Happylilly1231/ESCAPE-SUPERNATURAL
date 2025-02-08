@@ -179,8 +179,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uC5F0\uAD6C\uC6D0\uC5D0\uAC8C\uC11C 2\uAE09 \uCE74\uB4DC\uD0A4 \uD68D\uB4DD\n\uC544\uC544\uC544\uC544\uC544\uC544\uC544\uC544\uC544"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8eed71873bc495347975f0852148e7b0, type: 2}
-  m_sharedMaterial: {fileID: -8951483572421331517, guid: 8eed71873bc495347975f0852148e7b0,
+  m_fontAsset: {fileID: 11400000, guid: d35c21ead3b187949bb8581122f72044, type: 2}
+  m_sharedMaterial: {fileID: 2464405391870959867, guid: d35c21ead3b187949bb8581122f72044,
     type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}

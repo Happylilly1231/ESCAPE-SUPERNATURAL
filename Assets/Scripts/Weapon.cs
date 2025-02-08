@@ -58,6 +58,8 @@ public class Weapon : MonoBehaviour
         }
         yield return new WaitForSeconds(0.1f);
 
+        SoundManager.instance.PlaySFX(weaponId - 1);
+
         Ray ray;
         int layerMask = GameManager.instance.enemyLayerMask | GameManager.instance.mapLayerMask;
         if (user == GameManager.instance.Characters[GameManager.instance.selectCharacterId])
@@ -86,7 +88,7 @@ public class Weapon : MonoBehaviour
             }
             else if (user.tag == "Enemy")
             {
-                if (hit.collider.gameObject.tag == "Player")
+                if (hit.collider.gameObject.tag == "Player" && !hit.collider.isTrigger) // 콜라이더가 트리거인지 검사 추가(for 물질통과 능력)
                 {
                     hit.collider.gameObject.GetComponent<PlayerController>().Damage(damage);
                     Debug.Log("플레이어가 총알에 맞았습니다!");

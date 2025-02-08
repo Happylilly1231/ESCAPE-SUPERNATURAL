@@ -210,7 +210,7 @@ GameObject:
   - component: {fileID: 7789090829004962264}
   m_Layer: 0
   m_Name: floor_2_no_lattice (3)
-  m_TagString: Untagged
+  m_TagString: Ceiling
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -309,7 +309,7 @@ GameObject:
   - component: {fileID: 1133468834672501791}
   m_Layer: 0
   m_Name: floor_2_no_lattice (4)
-  m_TagString: Untagged
+  m_TagString: Ceiling
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -848,7 +848,7 @@ GameObject:
   - component: {fileID: 429826516480988362}
   m_Layer: 0
   m_Name: floor_2_no_lattice (2)
-  m_TagString: Untagged
+  m_TagString: Ceiling
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1911,7 +1911,7 @@ GameObject:
   - component: {fileID: 20534240}
   m_Layer: 0
   m_Name: floor_2 (4)
-  m_TagString: Untagged
+  m_TagString: Ceiling
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -3439,7 +3439,7 @@ GameObject:
   - component: {fileID: 6258005392400041281}
   m_Layer: 0
   m_Name: floor_2_no_lattice
-  m_TagString: Untagged
+  m_TagString: Ceiling
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

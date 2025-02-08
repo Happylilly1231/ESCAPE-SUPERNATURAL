@@ -40,7 +40,7 @@ public class CheckTargetPos : MonoBehaviour
         foreach (Collider hit in hits)
         {
             Debug.Log("checkTargetPos : " + hit.gameObject.name);
-            if (hit.gameObject.tag == "OuterWall" || hit.gameObject.tag == "InnerWall" || hit.gameObject.tag == "Door")
+            if (hit.gameObject.tag == "OuterWall" || hit.gameObject.tag == "InnerWall" || hit.gameObject.tag == "Door" || hit.gameObject.tag == "Ceiling")
             {
                 obstacleDetected = true;
                 break;
