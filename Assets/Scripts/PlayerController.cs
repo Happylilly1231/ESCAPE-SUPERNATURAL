@@ -681,31 +681,34 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        // 땅에 닿아있는지 검사
-        CheckGround();
-
         if (isPlayingCharacter)
         {
-            // 8방향 이동
-            Vector3 inputDir = new Vector3(inputX, 0, inputZ).normalized;
-            Vector3 moveDir = transform.TransformDirection(inputDir); // 로컬 방향으로 변환
-            rigid.MovePosition(rigid.position + moveDir * moveSpeed * Time.fixedDeltaTime);
+            // 땅에 닿아있는지 검사
+            CheckGround();
 
-            // 회전
-            Vector3 rotation = new Vector3(0, inputs.turn, 0) * turnSpeed * Time.fixedDeltaTime;
-            Quaternion deltaRotation = Quaternion.Euler(rotation);
-            rigid.MoveRotation(rigid.rotation * deltaRotation);
+            if (isPlayingCharacter)
+            {
+                // 8방향 이동
+                Vector3 inputDir = new Vector3(inputX, 0, inputZ).normalized;
+                Vector3 moveDir = transform.TransformDirection(inputDir); // 로컬 방향으로 변환
+                rigid.MovePosition(rigid.position + moveDir * moveSpeed * Time.fixedDeltaTime);
 
-            // // 점프
-            // if (anim.GetBool("Jump"))
-            // {
-            //     rigid.AddForce(Vector3.up * jumpForce, ForceMode.Impulse); // 점프
-            //     CheckGround(); // 땅에서 떨어졌으므로 체크
-            //     anim.SetBool("Jump", false); // 점프 변수 false로 다시 초기화
-            // }
+                // 회전
+                Vector3 rotation = new Vector3(0, inputs.turn, 0) * turnSpeed * Time.fixedDeltaTime;
+                Quaternion deltaRotation = Quaternion.Euler(rotation);
+                rigid.MoveRotation(rigid.rotation * deltaRotation);
 
-            // 상호작용 가능한 물체가 범위 내에 있는지 체크
-            // CheckCanInteraction();
+                // // 점프
+                // if (anim.GetBool("Jump"))
+                // {
+                //     rigid.AddForce(Vector3.up * jumpForce, ForceMode.Impulse); // 점프
+                //     CheckGround(); // 땅에서 떨어졌으므로 체크
+                //     anim.SetBool("Jump", false); // 점프 변수 false로 다시 초기화
+                // }
+
+                // 상호작용 가능한 물체가 범위 내에 있는지 체크
+                // CheckCanInteraction();
+            }
         }
     }
 

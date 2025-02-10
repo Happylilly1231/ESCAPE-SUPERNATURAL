@@ -10039,6 +10039,7 @@ GameObject:
   - component: {fileID: 721373108}
   - component: {fileID: 721373111}
   - component: {fileID: 721373110}
+  - component: {fileID: 721373112}
   m_Layer: 0
   m_Name: Teleport Alone Pos Circle
   m_TagString: Untagged
@@ -10125,7 +10126,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isMoveOkay: 0
-  radius: 0.6
+  radius: -1
 --- !u!135 &721373111
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -10146,6 +10147,27 @@ SphereCollider:
   m_Enabled: 0
   serializedVersion: 3
   m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!65 &721373112
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 721373106}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.0000001, y: 2, z: 1.0000002}
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &727900778
 GameObject:
@@ -22164,6 +22186,7 @@ GameObject:
   - component: {fileID: 1423297797}
   - component: {fileID: 1423297799}
   - component: {fileID: 1423297800}
+  - component: {fileID: 1423297801}
   m_Layer: 0
   m_Name: Teleport Together Pos Circle
   m_TagString: Untagged
@@ -22271,7 +22294,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isMoveOkay: 0
-  radius: 2
+  radius: -1
+--- !u!65 &1423297801
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1423297795}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.0000001, y: 2, z: 1.0000002}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1428635701
 GameObject:
   m_ObjectHideFlags: 0

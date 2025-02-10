@@ -45,7 +45,6 @@ public class CloneController : MonoBehaviour
     void Awake()
     {
         nav = GetComponent<NavMeshAgent>();
-        nav.isStopped = true;
     }
 
     // 분신을 생성할 때(분신이 활성화될 때) 실행되는 함수
@@ -53,10 +52,14 @@ public class CloneController : MonoBehaviour
     {
         // 초기화
         nav.enabled = true; // NavMeshAgent 다시 활성화
+        nav.isStopped = true;
         curHp = maxHp; // 현재 체력 최대 체력으로 설정
         isMovingToTargetPos = false;
         isCurFollow = false;
         IsFollow = false;
+
+        hpBar.value = curHp / maxHp;
+        hpTxt.text = curHp.ToString() + " / " + maxHp.ToString();
 
         // 모든 무기 비활성화
         foreach (GameObject weapon in weapons)
@@ -73,6 +76,8 @@ public class CloneController : MonoBehaviour
                 int id = cloningAbilityCharacterController.equipWeapons[i].GetComponent<Weapon>().weaponId;
                 holdingWeapon = weapons[id];
                 holdingWeapon.SetActive(true);
+                Debug.Log("---" + cloningAbilityCharacterController.equipWeapons[i].GetComponent<Weapon>().curBulletCnt);
+                holdingWeapon.GetComponent<Weapon>().curBulletCnt = cloningAbilityCharacterController.equipWeapons[i].GetComponent<Weapon>().curBulletCnt;
                 break;
             }
         }
